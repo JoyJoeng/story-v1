@@ -395,23 +395,25 @@ function mdToHtml(md){const lines=md.split('\n');const out=[];const toc=[];let i
     out.push('<p>'+inlineMd(ln)+'</p>');i++;}
   if(toc.length){const th='<div class="toc"><div class="tt">목차</div><ol>'+toc.map(t=>'<li>'+inlineMd(t)+'</li>').join('')+'</ol></div>';const h1i=out.findIndex(x=>x.startsWith('<h1>'));out.splice(h1i>=0?h1i+1:0,0,th);}
   return out.join('\n');}
-function buildStoryMarkdown(st){const w=WORLDS.find(x=>x.id===st.world_id);
+function buildStoryMarkdown(st,ed){const w=WORLDS.find(x=>x.id===st.world_id);
   const chars=pubChars().filter(c=>storyCharIds(st).includes(c.id));const eps=pubEps().filter(e=>e.story_id===st.id);
   const pi=tropeInfo(st.central_trope),strong=pi&&pi.median_er>=baseER();const avg=eps.length?Math.round(eps.reduce((a,e)=>a+judgeEpisode(e).score,0)/eps.length):0;
   let md=`# ${st.title}\n> ${st.logline||''}\n\n`;
   md+=`## 1. 개요\n- **세계관**: ${w?w.name:st.world_id}${w&&w.tone?` — ${w.tone}`:''}\n- **중심 트로프**: ${st.central_trope}${pi?` (ER ${pi.median_er}% · ${strong?'저장 견인력↑':'평균 이하'})`:''}\n- **등장 캐릭터**: ${chars.length}명\n- **에피소드**: ${eps.length}편${eps.length?` · 평균 자동점수 ${avg}/60`:''}\n\n`;
   if(w){md+=`## 2. 세계관 설정\n- **톤**: ${w.tone||'-'}\n- **배경**: ${w.setting||'-'}\n`;if((w.localization_rules||[]).length){md+=`- **이식 규칙**:\n`;w.localization_rules.forEach(r=>md+=`  - ${r}\n`);}md+=`\n`;}
   md+=`## 3. 등장인물\n`;if(!chars.length)md+=`- (아직 없음)\n\n`;
-  chars.forEach(c=>{const ti=trigInfo(c.primary_trigger);md+=`### ${c.name}${c.archetype?` — ${c.archetype}`:''}\n- **1차 트리거**: ${trigLabel(c.primary_trigger)}${ti?` (ER ${ti.median_er}%)`:''}\n`;
+  chars.forEach(c=>{const ti=trigInfo(c.primary_trigger);md+=`### ${c.name}${c.archetype?` — ${c.archetype}`:''}${ed?` ⟦EDIT:char:${c.id}:${c.__fileId||''}⟧`:''}\n- **1차 트리거**: ${trigLabel(c.primary_trigger)}${ti?` (ER ${ti.median_er}%)`:''}\n`;
     if(c.secondary_trigger)md+=`- **2차 트리거**: ${trigLabel(c.secondary_trigger)}\n`;md+=`- **갭(강함↔약함)**: ${c.gap_surface||'-'} ↔ ${c.gap_hidden||'-'}\n`;
     if(c.signature_action)md+=`- **시그니처 행동**: ${c.signature_action}\n`;if(c.first3s_hook)md+=`- **첫 3초 훅**: ${c.first3s_hook}\n`;
     if(c.tension_partner)md+=`- **텐션 상대**: ${c.tension_partner}\n`;if(c.taboo_barrier)md+=`- **금기·장벽**: ${c.taboo_barrier}\n`;md+=`\n`;});
-  md+=`## 4. 전개 (Arc)\n> ${st.arc||'(미작성)'}\n\n## 5. 에피소드 목록\n`;
-  if(!eps.length)md+=`- (아직 없음)\n`;else{md+=`| 화 | 제목 | 주인공 | 회수 트리거 | 자동점수 |\n|---|---|---|---|---|\n`;eps.forEach((e,i)=>{const ch=CHARS.find(c=>c.id===e.character_id);md+=`| ${i+1} | ${e.title} | ${ch?ch.name:'-'} | ${trigLabel(e.target_trigger)} | ${judgeEpisode(e).score}/60 |\n`;});}
+  md+=`## 4. 전개 (Arc)${ed?` ⟦EDIT:story:${st.id}:${st.__fileId||''}⟧`:''}\n> ${st.arc||'(미작성)'}\n\n## 5. 에피소드 목록\n`;
+  if(!eps.length)md+=`- (아직 없음)\n`;else{md+=`| 화 | 제목 | 주인공 | 회수 트리거 | 자동점수 |${ed?' 편집 |':''}\n|---|---|---|---|---|${ed?'---|':''}\n`;eps.forEach((e,i)=>{const ch=CHARS.find(c=>c.id===e.character_id);md+=`| ${i+1} | ${e.title} | ${ch?ch.name:'-'} | ${trigLabel(e.target_trigger)} | ${judgeEpisode(e).score}/60 |${ed?` ⟦EDIT:ep:${e.id}:${e.__fileId||''}⟧ |`:''}\n`;});}
   return md;}
 function renderWiki(){const el=document.getElementById('wiki');if(!el)return;const stories=pubStories();
   if(!stories.length){el.innerHTML='<div class="muted">발행된 메인스토리가 없습니다. 발행하면 여기 나무위키 스타일로 자동 정리됩니다.</div>';return;}
-  WIKI_MD={};let h='';stories.forEach(st=>{const md=buildStoryMarkdown(st);WIKI_MD[st.id]=md;h+=`<div class="wikidoc"><div class="wikitools"><button class="mini" onclick='editRecord("story","${st.id}","${st.__fileId||''}")'>✏ 수정</button> <button class="mini" onclick='copyMd("${st.id}")'>📋 마크다운 복사</button></div>${mdToHtml(md)}</div>`;});
+  WIKI_MD={};let h='';stories.forEach(st=>{WIKI_MD[st.id]=buildStoryMarkdown(st);
+    const disp=mdToHtml(buildStoryMarkdown(st,true)).replace(/⟦EDIT:(\w+):([^:⟧]*):([^⟧]*)⟧/g,(m,t,id,fid)=>`<button class="mini" onclick='editRecord("${t}","${id}","${fid}")'>✏ 수정</button>`);
+    h+=`<div class="wikidoc"><div class="wikitools"><button class="mini" onclick='editRecord("story","${st.id}","${st.__fileId||''}")'>✏ 스토리 정보 수정</button> <button class="mini" onclick='copyMd("${st.id}")'>📋 마크다운 복사</button></div>${disp}</div>`;});
   el.innerHTML=h;}
 function copyMd(id){const md=WIKI_MD[id]||'';if(navigator.clipboard)navigator.clipboard.writeText(md).then(()=>toast('마크다운 복사됨'),()=>toast('복사 실패'));else toast('복사 미지원');}
 
