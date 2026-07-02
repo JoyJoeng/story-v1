@@ -115,6 +115,11 @@ label{display:block;font-size:12px;color:#555;margin-top:9px;font-weight:600}
     <div id="wiki"><span class="spin"></span></div>
   </div>
 
+  <div class="card">
+    <h2>🎭 발행된 캐릭터 · 에피소드 <span class="muted">발행된 것만 · ✏로 바로 수정</span></h2>
+    <div id="pubList"><span class="spin"></span></div>
+  </div>
+
   <div class="grid">
     <div>
       <div class="card">
@@ -290,7 +295,7 @@ async function loadAll(){document.getElementById('status').innerHTML='<span clas
     let W,C,S,E,B;[W,C,S,E,B]=await Promise.all([loadOf(FOLDERS.world),loadOf(FOLDERS.char),loadOf(FOLDERS.story),loadOf(FOLDERS.ep),loadOf(FOLDERS.sb)]);
     const dd=a=>{const m={};a.forEach(x=>{if(x&&x.id&&!(x.id in m))m[x.id]=x;});return Object.values(m);};
     WORLDS=dd(W);CHARS=dd(C);STORIES=dd(S);EPS=dd(E);SBS=dd(B);
-    renderRules();await renderMap();renderSummary();renderWiki();fillSelectors();renderDrafts();
+    renderRules();await renderMap();renderSummary();renderWiki();renderPubList();fillSelectors();renderDrafts();
     document.getElementById('status').textContent='';
   }catch(e){document.getElementById('status').innerHTML='<span style="color:#c0392b">오류: '+e.message+'</span>';document.getElementById('map').innerHTML='<div class="note err">'+e.message+'</div>';}}
 
@@ -416,6 +421,14 @@ function renderWiki(){const el=document.getElementById('wiki');if(!el)return;con
     h+=`<div class="wikidoc"><div class="wikitools"><button class="mini" onclick='editRecord("story","${st.id}","${st.__fileId||''}")'>✏ 스토리 정보 수정</button> <button class="mini" onclick='copyMd("${st.id}")'>📋 마크다운 복사</button></div>${disp}</div>`;});
   el.innerHTML=h;}
 function copyMd(id){const md=WIKI_MD[id]||'';if(navigator.clipboard)navigator.clipboard.writeText(md).then(()=>toast('마크다운 복사됨'),()=>toast('복사 실패'));else toast('복사 미지원');}
+function renderPubList(){const el=document.getElementById('pubList');if(!el)return;const chars=pubChars();
+  if(!chars.length){el.innerHTML='<div class="muted">발행된 캐릭터가 없습니다. 드래프트를 발행하면 여기 나옵니다.</div>';return;}
+  let h='';chars.forEach(c=>{const eps=pubEps().filter(e=>e.character_id===c.id);
+    h+=`<div class="world"><div class="whead"><span>🎭 <b>${c.name}</b> <span class="k">${trigLabel(c.primary_trigger)}${c.archetype?' · '+c.archetype:''}</span></span><button class="mini" onclick='editRecord("char","${c.id}","${c.__fileId||''}")'>✏ 수정</button></div>`;
+    if(!eps.length)h+=`<div class="ep">딸린 에피소드 없음</div>`;
+    else eps.forEach(e=>{h+=`<div class="char"><div class="chead"><span class="name">▶ ${e.title} <span class="k">${trigLabel(e.target_trigger)} · ${judgeEpisode(e).score}/60</span></span><button class="mini" onclick='editRecord("ep","${e.id}","${e.__fileId||''}")'>✏ 수정</button></div></div>`;});
+    h+=`</div>`;});
+  el.innerHTML=h;}
 
 /* ---------- 추천 (per tab) ---------- */
 function fixedWorld(){return WORLDS.find(w=>w.id==='world_highschool')||WORLDS.find(w=>w.name==='고등학교')||WORLDS[0]||null;}
