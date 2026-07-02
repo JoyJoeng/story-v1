@@ -23,9 +23,11 @@ th,td{text-align:left;padding:5px 6px;border-bottom:1px solid #f0f0f2}
 th{color:#8a8a90;font-weight:600}
 .badge{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
 .b-strong{background:#e6f7ec;color:#137a3d}.b-weak{background:#fdecec;color:#c0392b}
-.b-blue{background:#e8f0fe;color:#1a56c4}.b-gray{background:#eef0f4;color:#555}
+.b-blue{background:#e8f0fe;color:#1a56c4}.b-gray{background:#eef0f4;color:#555}.b-draft{background:#fff2d6;color:#8a5a00}
 button{font:inherit;border:1px solid #cfcfd6;background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
 button.primary{background:#1c1c1e;color:#fff;border-color:#1c1c1e}
+button.pub{background:#137a3d;color:#fff;border-color:#137a3d}
+button.del{background:#fff;color:#c0392b;border-color:#e3b3b3}
 button.mini{padding:2px 8px;font-size:12px}
 button:disabled{opacity:.5;cursor:not-allowed}
 input,select,textarea{font:inherit;width:100%;padding:7px 8px;border:1px solid #d4d4da;border-radius:8px;background:#fff;margin-top:3px}
@@ -43,14 +45,27 @@ label{display:block;font-size:12px;color:#555;margin-top:9px;font-weight:600}
 #map svg{max-width:100%;height:auto}
 .storybox{border:1px solid #e6e6ea;border-radius:10px;padding:10px;margin-bottom:10px}
 .storybox .t{font-weight:700}
+.draftrow{border:1px solid #f0e2c0;background:#fffdf6;border-radius:8px;padding:8px;margin-bottom:8px;font-size:12px}
+.draftrow .btns{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
 .legend{font-size:11px;color:#8a8a90;margin-top:6px}
-.legend b{color:#555}
 #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;z-index:50}
 #toast.show{opacity:1}
 .spin{display:inline-block;width:12px;height:12px;border:2px solid #ccc;border-top-color:#1c1c1e;border-radius:50%;animation:s .7s linear infinite;vertical-align:-1px}
 @keyframes s{to{transform:rotate(360deg)}}
 .detail{font-size:12px}.detail div{margin:2px 0}
 .adv{font-size:11px;color:#a06000;background:#fff7e6;border-radius:6px;padding:4px 8px;margin-top:4px}
+.wikidoc{border:1px solid #e6e6ea;border-radius:10px;padding:16px 18px;margin-bottom:14px;background:#fff}
+.wikidoc h1{font-size:19px;margin:0 0 4px;padding-bottom:6px;border-bottom:2px solid #1c1c1e}
+.wikidoc h2{font-size:15px;margin:16px 0 6px;padding:4px 8px;background:#f0f2f5;border-left:4px solid #3b6fd4;border-radius:0 4px 4px 0}
+.wikidoc h3{font-size:13.5px;margin:12px 0 4px;color:#1a3a6b}
+.wikidoc blockquote{margin:6px 0;padding:6px 12px;background:#f7f9fc;border-left:3px solid #b9c6de;color:#333;font-style:italic}
+.wikidoc ul,.wikidoc ol{margin:4px 0 8px;padding-left:20px}.wikidoc li{margin:2px 0}
+.wikidoc table{width:100%;border-collapse:collapse;margin:6px 0;font-size:12px}
+.wikidoc th,.wikidoc td{border:1px solid #dcdfe6;padding:5px 7px;text-align:left}.wikidoc th{background:#eef1f6}
+.wikidoc hr{border:none;border-top:1px solid #eee;margin:12px 0}
+.toc{display:inline-block;min-width:200px;background:#f7f8fa;border:1px solid #e0e3e8;border-radius:6px;padding:8px 12px;margin:6px 0;font-size:12px}
+.toc .tt{font-weight:700;margin-bottom:4px}.toc ol{margin:0;padding-left:18px}
+.wikitools{display:flex;gap:6px;margin-bottom:6px}
 #gate{max-width:520px;margin:8vh auto;text-align:center}
 #gate .card{padding:26px}
 .gbtn{display:inline-flex;align-items:center;gap:8px;background:#1a73e8;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:600;cursor:pointer}
@@ -58,54 +73,70 @@ label{display:block;font-size:12px;color:#555;margin-top:9px;font-weight:600}
 </head>
 <body>
 
-<!-- ===== 로그인 게이트 ===== -->
 <div id="gate">
   <div class="card">
     <h1>숏폼 드라마 기획 — 구조 대시보드</h1>
-    <p class="muted">본인 구글 계정으로 로그인하면, 본인 Google Drive의 <b>기획-v1</b> 워크스페이스를 구조 지도로 보고 편집합니다.</p>
+    <p class="muted">본인 구글 계정으로 로그인하면 본인 Drive의 <b>기획-v1</b> 워크스페이스를 읽고 편집합니다.</p>
     <div id="cfgWarn"></div>
     <div style="margin:16px 0"><button class="gbtn" id="loginBtn">Google로 로그인</button></div>
-    <details style="text-align:left;margin-top:10px">
-      <summary class="muted" style="cursor:pointer">고급: 루트 폴더를 직접 지정</summary>
-      <label>루트 폴더 ID (비우면 이름 '기획-v1' 자동 탐색)
-        <input id="rootIdInput" placeholder="예: 1BjcEr0ANTEvvU5AYZL1BdicJ_4wB7OeA"></label>
-    </details>
+    <details style="text-align:left;margin-top:10px"><summary class="muted" style="cursor:pointer">고급: 루트 폴더 직접 지정</summary>
+      <label>루트 폴더 ID (비우면 '기획-v1' 자동 탐색) <input id="rootIdInput" placeholder="예: 1BjcEr0..."></label></details>
     <div id="gateMsg"></div>
   </div>
 </div>
 
-<!-- ===== 앱 본문 ===== -->
 <div class="wrap hidden" id="app">
   <h1>숏폼 드라마 기획 — 구조 대시보드</h1>
   <div class="sub">Google Drive · <b id="rootName">기획-v1</b> · <span id="who"></span>
     <button class="mini" onclick="loadAll()">↻ 새로고침</button>
-    <button class="mini" onclick="signOut()">로그아웃</button>
-    <span id="status"></span></div>
+    <button class="mini" onclick="signOut()">로그아웃</button> <span id="status"></span></div>
 
   <div class="card">
-    <h2>🕸 구조 지도 <span class="muted">메인스토리 ─ 캐릭터 → 에피소드 (⇢ 스토리로 회수)</span></h2>
+    <h2>🕸 구조 지도 <span class="muted">발행된 것만 표시 · 메인스토리 ─ 캐릭터 → 에피소드</span></h2>
     <div id="map"><span class="spin"></span> 불러오는 중…</div>
-    <div class="legend"><b>📖</b> 메인스토리 · <b>🎭</b> 캐릭터(트리거) · <b>▶</b> 에피소드(자동점수) ·
-      실선 = 스토리↔캐릭터 / 캐릭터→에피소드 · 점선 = 에피소드가 스토리로 회수. 노드 클릭 시 상세.</div>
+    <div class="legend">📖 메인스토리 · 🎭 캐릭터(트리거) · ▶ 에피소드(자동점수). 노드 클릭 시 상세·수정·삭제.</div>
+  </div>
+
+  <div class="card">
+    <h2>📖 메인스토리 정리 <span class="muted">나무위키 스타일 · 발행 데이터에서 자동 생성</span></h2>
+    <div id="wiki"><span class="spin"></span></div>
   </div>
 
   <div class="grid">
     <div>
       <div class="card">
         <div class="tabs">
-          <button data-tab="summary" class="active">🔗 관계성 요약</button>
+          <button data-tab="drafts" class="active">📥 드래프트함</button>
+          <button data-tab="summary">🔗 관계성 요약(DB)</button>
+          <button data-tab="addStory">＋ 메인스토리</button>
           <button data-tab="addChar">＋ 캐릭터</button>
           <button data-tab="addEp">＋ 에피소드</button>
-          <button data-tab="addWorld">＋ 세계관</button>
-          <button data-tab="addStory">＋ 메인스토리</button>
           <button data-tab="addSb">＋ 스토리보드</button>
         </div>
 
-        <div id="tab-summary"><div id="summary"><span class="spin"></span></div></div>
+        <div id="tab-drafts">
+          <div class="note info">여기 있는 건 아직 <b>드래프트</b>(DB 아님). 다듬은 뒤 <b>발행</b>하면 지도·요약에 올라갑니다.</div>
+          <div id="drafts" style="margin-top:8px"><span class="spin"></span></div>
+        </div>
+
+        <div id="tab-summary" class="hidden"><div id="summary"><span class="spin"></span></div></div>
+
+        <div id="tab-addStory" class="hidden">
+          <div id="rec_story"></div>
+          <div id="edit_story"></div>
+          <label>세계관 <select id="st_world"></select></label>
+          <div class="row2"><label>제목 <input id="st_title"></label><label>ID <input id="st_id" placeholder="story_hs_main"></label></div>
+          <label>중심 트로프 <select id="st_trope"></select></label>
+          <label>로그라인 <input id="st_log"></label>
+          <label>전체 흐름(arc) <textarea id="st_arc"></textarea></label>
+          <div style="margin-top:12px"><button class="primary" onclick="addStory()">드래프트로 저장</button></div>
+          <div id="st_msg"></div>
+        </div>
 
         <div id="tab-addChar" class="hidden">
+          <div id="rec_char"></div>
+          <div id="edit_char"></div>
           <label>세계관 <select id="c_world"></select></label>
-          <div class="note info" style="margin-top:9px">💡 이 캐릭터를 메인스토리에 <b>연결</b>하려면, 다음 단계에서 <b>이 캐릭터로 에피소드를 추가</b>하세요. 그 순간 지도에 스토리↔캐릭터 관계가 생깁니다.</div>
           <div class="row2"><label>이름 <input id="c_name"></label><label>ID <input id="c_id" placeholder="char_dowoon"></label></div>
           <label>학년·반 <input id="c_grade"></label>
           <label>아키타입 <select id="c_arch">
@@ -118,12 +149,13 @@ label{display:block;font-size:12px;color:#555;margin-top:9px;font-weight:600}
           <label>시그니처 행동 <input id="c_sig"></label>
           <label>첫 3초 훅 <textarea id="c_hook"></textarea></label>
           <div class="row2"><label>텐션 상대 <input id="c_tp"></label><label>금기·장벽 <input id="c_taboo"></label></div>
-          <div style="margin-top:12px"><button class="primary" id="c_submit" onclick="addChar()">캐릭터 추가</button></div>
+          <div style="margin-top:12px"><button class="primary" id="c_submit" onclick="addChar()">드래프트로 저장</button></div>
           <div id="c_msg"></div>
         </div>
 
         <div id="tab-addEp" class="hidden">
-          <div class="note info">에피소드를 추가하면 해당 캐릭터 아래에 달리고, 메인스토리로 점선 연결되며 관계성 요약이 갱신됩니다.</div>
+          <div id="rec_ep"></div>
+          <div id="edit_ep"></div>
           <label>주인공 캐릭터 <select id="e_char" onchange="epCharChanged()"></select></label>
           <label>메인스토리 <select id="e_story"></select></label>
           <div class="row2"><label>제목 <input id="e_title"></label><label>ID <input id="e_id" placeholder="ep_dowoon_01"></label></div>
@@ -134,37 +166,16 @@ label{display:block;font-size:12px;color:#555;margin-top:9px;font-weight:600}
           <label>BUILD (12-30s) <textarea id="e_build"></textarea></label>
           <label>PAYOFF (30-45s) <textarea id="e_payoff"></textarea></label>
           <label>HOOK-OUT (마지막 3s) <textarea id="e_hookout"></textarea></label>
-          <div style="margin-top:12px"><button class="primary" onclick="addEp()">에피소드 추가</button></div>
+          <div style="margin-top:12px"><button class="primary" onclick="addEp()">드래프트로 저장</button></div>
           <div id="e_msg"></div>
-        </div>
-
-        <div id="tab-addWorld" class="hidden">
-          <label>세계관 이름 <input id="w_name"></label>
-          <label>ID <input id="w_id" placeholder="world_highschool"></label>
-          <label>톤 <input id="w_tone"></label>
-          <label>배경·설정 <textarea id="w_setting"></textarea></label>
-          <label>이식 규칙(줄바꿈) <textarea id="w_rules"></textarea></label>
-          <div style="margin-top:12px"><button class="primary" onclick="addWorld()">세계관 추가</button></div>
-          <div id="w_msg"></div>
-        </div>
-
-        <div id="tab-addStory" class="hidden">
-          <div class="note info">메인스토리를 만들면 지도의 중심 노드가 됩니다. 캐릭터를 추가할 때 이 스토리로 에피소드를 만들어 연결하세요.</div>
-          <label>세계관 <select id="st_world"></select></label>
-          <div class="row2"><label>제목 <input id="st_title"></label><label>ID <input id="st_id" placeholder="story_hs_main"></label></div>
-          <label>중심 트로프 <select id="st_trope"></select></label>
-          <label>로그라인 <input id="st_log"></label>
-          <label>전체 흐름(arc) <textarea id="st_arc"></textarea></label>
-          <div style="margin-top:12px"><button class="primary" onclick="addStory()">메인스토리 추가</button></div>
-          <div id="st_msg"></div>
         </div>
 
         <div id="tab-addSb" class="hidden">
           <label>연결 에피소드 <select id="s_ep"></select></label>
           <label>ID <input id="s_id" placeholder="sb_dowoon_01"></label>
-          <div class="note info">10컷·3초 고정. framing/gaze/angle은 정해진 값만. 남자 대사는 [생성]칸에 ③ (입모양+보이스)"대사".</div>
+          <div class="note info">10컷·3초 고정. framing/gaze/angle은 정해진 값만.</div>
           <div id="sbCuts"></div>
-          <div style="margin-top:12px"><button class="primary" onclick="addSb()">스토리보드 추가</button></div>
+          <div style="margin-top:12px"><button class="primary" onclick="addSb()">드래프트로 저장</button></div>
           <div id="s_msg"></div>
         </div>
       </div>
@@ -192,105 +203,107 @@ label{display:block;font-size:12px;color:#555;margin-top:9px;font-weight:600}
 <div id="toast"></div>
 
 <script>
-/* ============================================================
-   ▼ 설정 (배포 전 반드시 수정) — 자세한 절차는 README.md
-   ============================================================ */
-const CONFIG = {
-  CLIENT_ID: "279160268866-6btq4gvj3g1e725vbk370kh8j2otlgom.apps.googleusercontent.com",
-  SCOPE: "https://www.googleapis.com/auth/drive",
-  ROOT_FOLDER_NAME: "기획-v1"
-};
+/* ===== 배포 전 수정 (README 참고) ===== */
+const CONFIG={CLIENT_ID:"279160268866-6btq4gvj3g1e725vbk370kh8j2otlgom.apps.googleusercontent.com",SCOPE:"https://www.googleapis.com/auth/drive",ROOT_FOLDER_NAME:"기획-v1"};
 
 const FRAMING=["미디엄","클로즈업","전신","인서트"],GAZE=["나를 본다","나를 안 본다","나를 보다가 안 본다","얼굴X"],
   ANGLE=["아이레벨","로우앵글","하이앵글"],TIMES=["0-3s","3-6s","6-9s","9-12s","12-15s","15-18s","18-21s","21-24s","24-27s","27-30s"];
-let TOKEN=null,tokenClient=null,ROOT_ID=null,FOLDERS={};
+const TRIG_ARCH={jealousy_possession_or_rival:"얼음 회장님",protective_claim_or_rescue:"다정한 소꿉친구",danger_rescue_romance:"다정한 소꿉친구",
+  choice_ultimatum_or_deadline:"열혈 직진남",forced_choice_or_ultimatum:"열혈 직진남",love_confession_or_desire:"열혈 직진남",
+  forbidden_love:"나쁜남자·일진",threat_danger_or_revenge:"나쁜남자·일진",secret_lie_or_reveal:"미스터리 전학생",secret_identity_or_hidden_truth:"미스터리 전학생"};
+const ARCH_TPL={
+  "얼음 회장님":{gs:"전교 1등·완벽·무표정",gh:"그 사람 앞에서만 말 더듬고 귀 빨개짐",sig:"여주 사물함에 몰래 우산·노트",hook:"무리를 다 지나치다 여주 앞에서만 멈칫, 프린트 툭 건네고 사라짐"},
+  "다정한 소꿉친구":{gs:"늘 웃고 다 받아주는 안전기지",gh:"위험할 때만 눈빛·목소리가 확 변함",sig:"넘어지기 직전 팔로 막아주고 '지나가다'",hook:"넘어지려는 순간 가방끈을 잡아줌"},
+  "나쁜남자·일진":{gs:"위험하고 규칙 밖",gh:"여주에게만 집요하고 서툴게 신경 씀",sig:"담배 끄며 다가와 한마디",hook:"'넌 왜 안 무서워하냐' 하며 다가옴"},
+  "열혈 직진남":{gs:"숨김없이 좋아함, 라이벌에 발끈",gh:"그 앞에서만 말이 서툴고 귀가 빨개짐",sig:"매일 아침 쪽지·정리된 노트를 사물함에",hook:"경기 중 관중석 여주만 찾아보고 씩 웃음"},
+  "미스터리 전학생":{gs:"정체·과거가 수수께끼",gh:"여주와의 접점에서만 흔들림",sig:"여주만 빤히 응시하다 사라짐",hook:"전학 인사 중 여주만 빤히 응시 → 컷"},
+  "기타":{gs:"",gh:"",sig:"",hook:""}};
+
+let TOKEN=null,tokenClient=null,ROOT_ID=null,FOLDERS={},EDIT=null;
 let RULES=null,WORLDS=[],CHARS=[],STORIES=[],EPS=[],SBS=[];
-if(window.mermaid) mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'default',flowchart:{htmlLabels:true,curve:'basis'}});
+if(window.mermaid) mermaid.initialize({startOnLoad:false,securityLevel:'loose',flowchart:{htmlLabels:true,curve:'basis'}});
 
 /* ---------- OAuth ---------- */
 window.addEventListener('load',()=>{
-  if(CONFIG.CLIENT_ID.startsWith("YOUR_"))
-    document.getElementById('cfgWarn').innerHTML='<div class="note err">⚠ CLIENT_ID 미설정. index.html의 CONFIG를 수정하세요 (README 참고).</div>';
+  if(CONFIG.CLIENT_ID.startsWith("YOUR_"))document.getElementById('cfgWarn').innerHTML='<div class="note err">⚠ CLIENT_ID 미설정. CONFIG를 수정하세요.</div>';
   const iv=setInterval(()=>{if(window.google&&google.accounts&&google.accounts.oauth2){clearInterval(iv);
     tokenClient=google.accounts.oauth2.initTokenClient({client_id:CONFIG.CLIENT_ID,scope:CONFIG.SCOPE,
       callback:(r)=>{if(r.error){document.getElementById('gateMsg').innerHTML='<div class="note err">로그인 실패: '+r.error+'</div>';return;}TOKEN=r.access_token;onSignedIn();}});}},200);
 });
-document.getElementById('loginBtn').onclick=()=>{if(!tokenClient){document.getElementById('gateMsg').innerHTML='<div class="note err">Google 스크립트 로딩 중… 잠시 후 다시.</div>';return;}tokenClient.requestAccessToken({prompt:'consent'});};
+document.getElementById('loginBtn').onclick=()=>{if(!tokenClient){document.getElementById('gateMsg').innerHTML='<div class="note err">Google 스크립트 로딩 중…</div>';return;}tokenClient.requestAccessToken({prompt:'consent'});};
 function signOut(){if(TOKEN)google.accounts.oauth2.revoke(TOKEN,()=>{});TOKEN=null;document.getElementById('app').classList.add('hidden');document.getElementById('gate').style.display='block';}
 async function onSignedIn(){document.getElementById('gate').style.display='none';document.getElementById('app').classList.remove('hidden');
   try{await whoAmI();await discover();await loadAll();}catch(e){document.getElementById('status').innerHTML='<span style="color:#c0392b">'+e.message+'</span>';document.getElementById('map').innerHTML='<div class="note err">'+e.message+'</div>';}}
-async function whoAmI(){try{const r=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+TOKEN}});const u=await r.json();document.getElementById('who').textContent=u.email||'';}catch(e){}}
+async function whoAmI(){try{const r=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+TOKEN}});document.getElementById('who').textContent=(await r.json()).email||'';}catch(e){}}
 
 /* ---------- Drive REST ---------- */
-async function driveFetch(url,opts={}){opts.headers=Object.assign({Authorization:'Bearer '+TOKEN},opts.headers||{});
-  let r=await fetch(url,opts);
+async function driveFetch(url,opts={}){opts.headers=Object.assign({Authorization:'Bearer '+TOKEN},opts.headers||{});let r=await fetch(url,opts);
   if(r.status===401){await new Promise((res,rej)=>{tokenClient.callback=(x)=>{if(x.error){rej(new Error('재인증 실패'));return;}TOKEN=x.access_token;res();};tokenClient.requestAccessToken({prompt:''});});
-    opts.headers.Authorization='Bearer '+TOKEN;r=await fetch(url,opts);}
-  return r;}
+    opts.headers.Authorization='Bearer '+TOKEN;r=await fetch(url,opts);}return r;}
 async function driveList(q){const url='https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(q)+'&fields=files(id,name,mimeType,parents)&pageSize=200&spaces=drive';
   const r=await driveFetch(url);if(!r.ok)throw new Error('목록 조회 실패 '+r.status);return (await r.json()).files||[];}
 async function driveGetJson(id){const r=await driveFetch('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media');if(!r.ok)throw new Error('읽기 실패 '+r.status);return JSON.parse(await r.text());}
+function stripMeta(o){const c={};for(const k in o)if(!k.startsWith('__'))c[k]=o[k];return c;}
 async function driveCreateJson(folderId,name,obj){const b='sf_'+Math.random().toString(36).slice(2);
-  const meta={name,parents:[folderId],mimeType:'application/json'};
-  const body='--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(meta)+'\r\n--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(obj,null,2)+'\r\n--'+b+'--';
-  const r=await driveFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body});
-  if(!r.ok)throw new Error('저장 실패 '+r.status+' '+(await r.text()).slice(0,120));return await r.json();}
+  const body='--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify({name,parents:[folderId],mimeType:'application/json'})+'\r\n--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(stripMeta(obj),null,2)+'\r\n--'+b+'--';
+  const r=await driveFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body});
+  if(!r.ok)throw new Error('저장 실패 '+r.status);return await r.json();}
+async function driveUpdateJson(fileId,obj){const r=await driveFetch('https://www.googleapis.com/upload/drive/v3/files/'+fileId+'?uploadType=media',
+  {method:'PATCH',headers:{'Content-Type':'application/json; charset=UTF-8'},body:JSON.stringify(stripMeta(obj),null,2)});
+  if(!r.ok)throw new Error('수정 실패 '+r.status);return await r.json();}
+async function driveTrash(fileId){const r=await driveFetch('https://www.googleapis.com/drive/v3/files/'+fileId,
+  {method:'PATCH',headers:{'Content-Type':'application/json; charset=UTF-8'},body:JSON.stringify({trashed:true})});
+  if(!r.ok)throw new Error('삭제 실패 '+r.status);return true;}
 async function findFolderByName(name){const f=await driveList(`name='${name.replace(/'/g,"\\'")}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);return f[0]?f[0].id:null;}
-
-/* app-body 호환 래퍼 (map 버전 코드가 listJson/loadRec/createRec를 쓰므로 REST로 매핑) */
-async function listJson(folderId){if(!folderId)return [];const f=await driveList(`'${folderId}' in parents and mimeType='application/json' and trashed=false`);
-  return f.filter(x=>x.name!=='_템플릿.json').map(x=>({id:x.id,title:x.name}));}
+async function listJson(folderId){if(!folderId)return [];const f=await driveList(`'${folderId}' in parents and mimeType='application/json' and trashed=false`);return f.filter(x=>x.name!=='_템플릿.json').map(x=>({id:x.id,title:x.name}));}
 async function loadRec(f){const o=await driveGetJson(f.id);o.__fileId=f.id;return o;}
 async function loadOf(folderId){return await Promise.all((await listJson(folderId)).map(loadRec));}
 async function createRec(folderId,title,obj){return await driveCreateJson(folderId,title,obj);}
 
-/* ---------- Discovery ---------- */
 async function discover(){document.getElementById('status').innerHTML='<span class="spin"></span> 폴더 탐색 중';
-  const manual=document.getElementById('rootIdInput').value.trim();
-  ROOT_ID=manual||await findFolderByName(CONFIG.ROOT_FOLDER_NAME);
+  const manual=document.getElementById('rootIdInput').value.trim();ROOT_ID=manual||await findFolderByName(CONFIG.ROOT_FOLDER_NAME);
   if(!ROOT_ID)throw new Error(`'${CONFIG.ROOT_FOLDER_NAME}' 폴더를 찾지 못했습니다. 고급에서 폴더 ID를 지정하세요.`);
-  const fs=await driveList(`'${ROOT_ID}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);
-  const by={};fs.forEach(f=>by[f.name]=f.id);
-  FOLDERS={rules:by['00_규칙엔진'],world:by['01_세계관'],char:by['02_캐릭터'],story:by['03_메인스토리'],ep:by['04_에피소드'],sb:by['05_스토리보드']};
-  document.getElementById('rootName').textContent=CONFIG.ROOT_FOLDER_NAME;}
+  const fs=await driveList(`'${ROOT_ID}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);const by={};fs.forEach(f=>by[f.name]=f.id);
+  FOLDERS={rules:by['00_규칙엔진'],world:by['01_세계관'],char:by['02_캐릭터'],story:by['03_메인스토리'],ep:by['04_에피소드'],sb:by['05_스토리보드']};}
 
 /* ---------- Load ---------- */
 function today(){return new Date().toISOString().slice(0,10);}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
-function msg(id,t,c){document.getElementById(id).innerHTML=`<div class="note ${c}">${t}</div>`;}
+function msg(id,t,c){const e=document.getElementById(id);if(e)e.innerHTML=`<div class="note ${c}">${t}</div>`;}
+function isPub(o){return o.status==='published';}
 async function loadAll(){document.getElementById('status').innerHTML='<span class="spin"></span> 동기화 중';
   try{
-    let RF=null;if(FOLDERS.rules){const rf=(await listJson(FOLDERS.rules)).find(f=>f.title==='규칙_최신.json');if(rf)RF=await driveGetJson(rf.id);}
-    RULES=RF;
+    let RF=null;if(FOLDERS.rules){const rf=(await listJson(FOLDERS.rules)).find(f=>f.title==='규칙_최신.json');if(rf)RF=await driveGetJson(rf.id);}RULES=RF;
     let W,C,S,E,B;[W,C,S,E,B]=await Promise.all([loadOf(FOLDERS.world),loadOf(FOLDERS.char),loadOf(FOLDERS.story),loadOf(FOLDERS.ep),loadOf(FOLDERS.sb)]);
-    const dedupe=a=>{const m={};a.forEach(x=>{if(x&&x.id&&!(x.id in m))m[x.id]=x;});return Object.values(m);};
-    WORLDS=dedupe(W);CHARS=dedupe(C);STORIES=dedupe(S);EPS=dedupe(E);SBS=dedupe(B);
-    renderRules();await renderMap();renderSummary();fillSelectors();
+    const dd=a=>{const m={};a.forEach(x=>{if(x&&x.id&&!(x.id in m))m[x.id]=x;});return Object.values(m);};
+    WORLDS=dd(W);CHARS=dd(C);STORIES=dd(S);EPS=dd(E);SBS=dd(B);
+    renderRules();await renderMap();renderSummary();renderWiki();fillSelectors();renderDrafts();
     document.getElementById('status').textContent='';
-  }catch(e){document.getElementById('status').innerHTML='<span style="color:#c0392b">오류: '+e.message+'</span>';document.getElementById('map').innerHTML='<div class="note err">'+e.message+'</div>';}
-}
+  }catch(e){document.getElementById('status').innerHTML='<span style="color:#c0392b">오류: '+e.message+'</span>';document.getElementById('map').innerHTML='<div class="note err">'+e.message+'</div>';}}
+
+/* published(DB) 서브셋 */
+function pubChars(){return CHARS.filter(isPub);}
+function pubStories(){return STORIES.filter(isPub);}
+function pubEps(){return EPS.filter(isPub);}
 
 /* ---------- rules ---------- */
 function baseER(){return RULES?RULES.baseline.median_er:0.42;}
 function trigInfo(t){return (RULES?.trigger_ranking_grammar||[]).find(x=>x.tag===t);}
 function tropeInfo(t){return (RULES?.trope_ranking||[]).find(x=>x.tag===t);}
 function trigLabel(t){const i=trigInfo(t);return i?i.label:t;}
-function renderRules(){
-  if(!RULES){document.getElementById('ruleMeta').textContent='(규칙 없음)';return;}
+function renderRules(){if(!RULES){document.getElementById('ruleMeta').textContent='(규칙 없음)';return;}
   document.getElementById('ruleMeta').textContent=`· ${RULES.n_videos_total}편`;
   document.getElementById('baseline').innerHTML=`기준선 ER <b>${RULES.baseline.median_er}%</b> · 저장률 ${RULES.baseline.median_save_rate}%`;
   let h='';RULES.trigger_ranking_grammar.slice(0,8).forEach(t=>{const s=t.median_er>=baseER();h+=`<tr><td>${t.label}</td><td>${t.median_er}</td><td><span class="badge ${s?'b-strong':'b-weak'}">${s?'강':'약'}</span></td></tr>`;});
   document.querySelector('#trigTable tbody').innerHTML=h;
   h='';RULES.trope_ranking.slice(0,6).forEach(t=>{const s=t.median_er>=baseER();h+=`<tr><td>${t.tag}${t.low_sample?' <span class="pill">저표본</span>':''}</td><td>${t.median_er}</td><td><span class="badge ${s?'b-strong':'b-weak'}">${s?'강':'약'}</span></td></tr>`;});
   document.querySelector('#tropeTable tbody').innerHTML=h;
-  const cm=RULES.cut_metrics?.top_third;if(cm)document.getElementById('cutMetrics').innerHTML=`컷 ${cm.median_cut_count}개 · 길이 ${cm.median_video_len}s · 첫3초 클로즈업 ${cm.median_first3s_closeup}`;
-}
+  const cm=RULES.cut_metrics?.top_third;if(cm)document.getElementById('cutMetrics').innerHTML=`컷 ${cm.median_cut_count}개 · 길이 ${cm.median_video_len}s · 첫3초 클로즈업 ${cm.median_first3s_closeup}`;}
 
-/* ---------- judge ---------- */
-function judgeEpisode(ep){
-  const ch=CHARS.find(c=>c.id===ep.character_id),st=STORIES.find(s=>s.id===ep.story_id),sb=SBS.find(b=>b.id===ep.storyboard_id);
+/* ---------- judge (A/60) ---------- */
+function judgeEpisode(ep){const ch=CHARS.find(c=>c.id===ep.character_id),st=STORIES.find(s=>s.id===ep.story_id),sb=SBS.find(b=>b.id===ep.storyboard_id);
   let sc=0;const f=[];
-  if(ch){const dup=CHARS.some(o=>o.id!==ch.id&&o.world_id===ch.world_id&&o.primary_trigger===ch.primary_trigger);if(!dup)sc+=12;else f.push('A1');}else f.push('A1');
+  if(ch){const dup=CHARS.some(o=>o.id!==ch.id&&o.world_id===ch.world_id&&o.primary_trigger===ch.primary_trigger&&isPub(o)&&isPub(ch));if(!dup)sc+=12;else f.push('A1');}else f.push('A1');
   const ti=trigInfo(ep.target_trigger);if(ti&&ti.median_er>=baseER())sc+=10;else f.push('A2');
   if(st){const pi=tropeInfo(st.central_trope);if(pi&&pi.median_er>=baseER())sc+=8;else f.push('A3');}else f.push('A3');
   if(sb&&sb.cuts){const c=sb.cuts;
@@ -298,130 +311,198 @@ function judgeEpisode(ep){
     if(c.every(x=>{const g=x.gen_beats||'',e=x.edit_subtitle||'';const b=(x.framing==='인서트')||((g.match(/[①②③④⑤]/g)||[]).length>=2);return b&&!/\d+s\b/.test(e)&&!/SFX|효과음|배경음|BGM/.test(e);}))sc+=12;else f.push('A5');
     if(c.every(x=>FRAMING.includes(x.framing)&&GAZE.includes(x.gaze)&&ANGLE.includes(x.angle)))sc+=8;else f.push('A6');
   }else f.push('A4~6');
-  return {score:sc,fails:f};
-}
+  return {score:sc,fails:f};}
 
-/* 스토리 연결 캐릭터 = character_ids ∪ 에피소드로 이어진 캐릭터 */
-function storyCharIds(st){const ids=new Set(st.character_ids||[]);EPS.forEach(e=>{if(e.story_id===st.id&&e.character_id)ids.add(e.character_id);});return [...ids];}
+function storyCharIds(st){const ids=new Set(st.character_ids||[]);pubEps().forEach(e=>{if(e.story_id===st.id&&e.character_id)ids.add(e.character_id);});return [...ids];}
 
-/* ---------- MAP ---------- */
+/* ---------- MAP (published only) ---------- */
 function nid(s){return 'N_'+String(s).replace(/[^a-zA-Z0-9]/g,'_');}
 function esc(s){return String(s||'').replace(/"/g,'').replace(/\n/g,' ').slice(0,40);}
 function buildMermaid(){
   let s='flowchart LR\n';
-  s+='classDef story fill:#e8f0fe,stroke:#1a56c4,color:#12408f,font-weight:bold;\n';
-  s+='classDef char fill:#fff,stroke:#8a8a90,color:#1c1c1e;\n';
-  s+='classDef epG fill:#e6f7ec,stroke:#137a3d,color:#0f5c2e;\n';
-  s+='classDef epB fill:#fdecec,stroke:#c0392b,color:#8a2620;\n';
-  const cls=[];
+  s+='classDef story fill:#e8f0fe,stroke:#1a56c4,color:#12408f,font-weight:bold;\nclassDef char fill:#fff,stroke:#8a8a90,color:#1c1c1e;\nclassDef epG fill:#e6f7ec,stroke:#137a3d,color:#0f5c2e;\nclassDef epB fill:#fdecec,stroke:#c0392b,color:#8a2620;\n';
+  const cls=[];const chars=pubChars(),stories=pubStories(),eps=pubEps();
   WORLDS.forEach(w=>{
-    const chars=CHARS.filter(c=>c.world_id===w.id),stories=STORIES.filter(x=>x.world_id===w.id);
+    const wc=chars.filter(c=>c.world_id===w.id),ws=stories.filter(x=>x.world_id===w.id);
+    if(!wc.length&&!ws.length)return;
     s+=`subgraph SUB_${nid(w.id)}["🌍 ${esc(w.name)}"]\n`;
-    stories.forEach(st=>{s+=`  ${nid(st.id)}["📖 ${esc(st.title)}"]\n`;cls.push(`class ${nid(st.id)} story;`);});
-    chars.forEach(c=>{s+=`  ${nid(c.id)}["🎭 ${esc(c.name)}<br/><small>${esc(trigLabel(c.primary_trigger))}</small>"]\n`;cls.push(`class ${nid(c.id)} char;`);});
-    EPS.filter(e=>chars.some(c=>c.id===e.character_id)).forEach(e=>{const j=judgeEpisode(e);s+=`  ${nid(e.id)}["▶ ${esc(e.title)}<br/><small>${j.score}/60</small>"]\n`;cls.push(`class ${nid(e.id)} ${j.score>=50?'epG':'epB'};`);});
-    stories.forEach(st=>storyCharIds(st).forEach(cid=>{if(chars.some(c=>c.id===cid))s+=`  ${nid(st.id)} --- ${nid(cid)}\n`;}));
-    EPS.forEach(e=>{if(chars.some(c=>c.id===e.character_id)){s+=`  ${nid(e.character_id)} --> ${nid(e.id)}\n`;if(e.story_id&&stories.some(x=>x.id===e.story_id))s+=`  ${nid(e.id)} -.-> ${nid(e.story_id)}\n`;}});
-    s+='end\n';
-  });
+    ws.forEach(st=>{s+=`  ${nid(st.id)}["📖 ${esc(st.title)}"]\n`;cls.push(`class ${nid(st.id)} story;`);});
+    wc.forEach(c=>{s+=`  ${nid(c.id)}["🎭 ${esc(c.name)}<br/><small>${esc(trigLabel(c.primary_trigger))}</small>"]\n`;cls.push(`class ${nid(c.id)} char;`);});
+    eps.filter(e=>wc.some(c=>c.id===e.character_id)).forEach(e=>{const j=judgeEpisode(e);s+=`  ${nid(e.id)}["▶ ${esc(e.title)}<br/><small>${j.score}/60</small>"]\n`;cls.push(`class ${nid(e.id)} ${j.score>=50?'epG':'epB'};`);});
+    ws.forEach(st=>storyCharIds(st).forEach(cid=>{if(wc.some(c=>c.id===cid))s+=`  ${nid(st.id)} --- ${nid(cid)}\n`;}));
+    eps.forEach(e=>{if(wc.some(c=>c.id===e.character_id)){s+=`  ${nid(e.character_id)} --> ${nid(e.id)}\n`;if(e.story_id&&ws.some(x=>x.id===e.story_id))s+=`  ${nid(e.id)} -.-> ${nid(e.story_id)}\n`;}});
+    s+='end\n';});
   s+=cls.join('\n')+'\n';
-  [...STORIES,...CHARS,...EPS].forEach(o=>{s+=`click ${nid(o.id)} call nodeClick("${o.id}")\n`;});
-  return s;
-}
-async function renderMap(){
-  const el=document.getElementById('map');
-  if(!WORLDS.length){el.innerHTML='<div class="muted">아직 구조가 없습니다. 세계관·메인스토리·캐릭터를 추가하면 지도가 그려집니다.</div>';return;}
+  [...stories,...chars,...eps].forEach(o=>{s+=`click ${nid(o.id)} call nodeClick("${o.id}")\n`;});
+  return s;}
+async function renderMap(){const el=document.getElementById('map');
+  if(!pubChars().length&&!pubStories().length){el.innerHTML='<div class="muted">아직 발행된 항목이 없습니다. 드래프트를 만들고 발행하면 여기에 지도가 그려집니다.</div>';return;}
   if(!window.mermaid){el.innerHTML='<div class="note err">지도 라이브러리 로드 실패</div>';return;}
   try{const {svg,bindFunctions}=await mermaid.render('mmd_'+Date.now(),buildMermaid());el.innerHTML=svg;if(bindFunctions)bindFunctions(el);}
-  catch(e){el.innerHTML='<div class="note err">지도 렌더 오류: '+e.message+'</div>';}
-}
-window.nodeClick=function(id){
-  const o=[...EPS,...CHARS,...STORIES].find(x=>x.id===id);if(!o)return;let x='';
-  if(EPS.includes(o)){const j=judgeEpisode(o),ch=CHARS.find(c=>c.id===o.character_id),st=STORIES.find(s=>s.id===o.story_id);
+  catch(e){el.innerHTML='<div class="note err">지도 렌더 오류: '+e.message+'</div>';}}
+window.nodeClick=function(id){const o=[...EPS,...CHARS,...STORIES].find(x=>x.id===id);if(!o)return;let x='',type='',fid=o.__fileId;
+  if(EPS.includes(o)){type='ep';const j=judgeEpisode(o),ch=CHARS.find(c=>c.id===o.character_id),st=STORIES.find(s=>s.id===o.story_id);
     x=`<div class="k">에피소드</div><div><b>${o.title}</b></div><div><span class="k">캐릭터</span> ${ch?ch.name:o.character_id} · <span class="k">스토리</span> ${st?st.title:'(없음)'}</div>
-      <div><span class="k">타깃 트리거</span> ${trigLabel(o.target_trigger)}</div>
-      <div style="margin-top:6px"><b>자동 심사 ${j.score}/60</b> ${j.fails.length?'<span class="badge b-weak">'+j.fails.join(',')+'</span>':'<span class="badge b-strong">A통과</span>'}</div>`+Object.entries(o.beats||{}).map(([k,v])=>`<div><b>${k}</b> ${v}</div>`).join('');
-  }else if(CHARS.includes(o)){const eps=EPS.filter(e=>e.character_id===o.id);
-    x=`<div class="k">캐릭터</div><div><b>${o.name}</b> · ${o.archetype}</div><div><span class="k">1차</span> ${trigLabel(o.primary_trigger)} · <span class="k">2차</span> ${trigLabel(o.secondary_trigger)}</div>
-      <div><span class="k">갭</span> ${o.gap_surface} ↔ ${o.gap_hidden}</div><div><span class="k">에피소드</span> ${eps.length}개: ${eps.map(e=>e.title).join(', ')||'없음'}</div>`;
-  }else{const chars=CHARS.filter(c=>storyCharIds(o).includes(c.id)),eps=EPS.filter(e=>e.story_id===o.id);
-    x=`<div class="k">메인스토리</div><div><b>${o.title}</b></div><div><span class="k">트로프</span> ${o.central_trope}</div>
-      <div><span class="k">캐릭터</span> ${chars.map(c=>c.name).join(', ')||'없음'}</div><div><span class="k">에피소드</span> ${eps.length}개</div><div>${o.logline||''}</div>`;
+      <div><span class="k">타깃</span> ${trigLabel(o.target_trigger)} · <b>자동 ${j.score}/60</b> ${j.fails.length?'<span class="badge b-weak">'+j.fails.join(',')+'</span>':'<span class="badge b-strong">A통과</span>'}</div>`+Object.entries(o.beats||{}).map(([k,v])=>`<div><b>${k}</b> ${v}</div>`).join('');
+  }else if(CHARS.includes(o)){type='char';const eps=pubEps().filter(e=>e.character_id===o.id);
+    x=`<div class="k">캐릭터</div><div><b>${o.name}</b> · ${o.archetype}</div><div><span class="k">1차</span> ${trigLabel(o.primary_trigger)}</div><div><span class="k">갭</span> ${o.gap_surface} ↔ ${o.gap_hidden}</div><div><span class="k">에피소드</span> ${eps.length}개</div>`;
+  }else{type='story';const chars=CHARS.filter(c=>storyCharIds(o).includes(c.id)),eps=pubEps().filter(e=>e.story_id===o.id);
+    x=`<div class="k">메인스토리</div><div><b>${o.title}</b></div><div><span class="k">트로프</span> ${o.central_trope}</div><div><span class="k">캐릭터</span> ${chars.map(c=>c.name).join(', ')||'없음'} · 에피소드 ${eps.length}개</div><div>${o.logline||''}</div>`;
   }
-  document.getElementById('detail').innerHTML=x;document.getElementById('detailCard').style.display='block';
-}
+  x+=`<div style="margin-top:10px;display:flex;gap:6px"><button class="mini" onclick='editRecord("${type}","${id}")'>✏ 수정</button><button class="mini del" onclick='deleteRecord("${type}","${id}","${fid}")'>🗑 삭제</button></div>`;
+  document.getElementById('detail').innerHTML=x;document.getElementById('detailCard').style.display='block';}
 
-/* ---------- 관계성 요약 ---------- */
-function renderSummary(){
-  const el=document.getElementById('summary');
-  if(!STORIES.length){el.innerHTML='<div class="muted">메인스토리가 없습니다. ＋메인스토리로 시작하세요.</div>';return;}
-  let h='';
-  STORIES.forEach(st=>{
-    const charIds=storyCharIds(st),chars=CHARS.filter(c=>charIds.includes(c.id)),eps=EPS.filter(e=>e.story_id===st.id);
+/* ---------- 관계성 요약 (published) ---------- */
+function renderSummary(){const el=document.getElementById('summary');const stories=pubStories();
+  if(!stories.length){el.innerHTML='<div class="muted">발행된 메인스토리가 없습니다.</div>';return;}
+  let h='';stories.forEach(st=>{const charIds=storyCharIds(st),chars=CHARS.filter(c=>charIds.includes(c.id)),eps=pubEps().filter(e=>e.story_id===st.id);
     const trigs=new Set();chars.forEach(c=>trigs.add(c.primary_trigger));eps.forEach(e=>trigs.add(e.target_trigger));
-    const avg=eps.length?Math.round(eps.reduce((a,e)=>a+judgeEpisode(e).score,0)/eps.length):0;
-    const pi=tropeInfo(st.central_trope),tropeStrong=pi&&pi.median_er>=baseER();
-    h+=`<div class="storybox"><div class="t">📖 ${st.title}</div>
-      <div class="k">트로프 ${st.central_trope} <span class="badge ${tropeStrong?'b-strong':'b-weak'}">${tropeStrong?'견인력↑':'약함'}</span></div>
-      <div style="margin-top:4px">캐릭터 <b>${chars.length}</b> · 에피소드 <b>${eps.length}</b> · 평균 자동점수 <b>${avg}/60</b></div>
-      <div style="margin-top:4px" class="k">등장</div><div>${chars.map(c=>`<span class="pill">🎭 ${c.name}</span>`).join('')||'<span class="muted">없음</span>'}</div>
-      <div style="margin-top:4px" class="k">커버된 트리거</div><div>${[...trigs].filter(Boolean).map(t=>{const s=trigInfo(t)&&trigInfo(t).median_er>=baseER();return `<span class="pill" style="background:${s?'#e6f7ec':'#fdecec'};color:${s?'#137a3d':'#c0392b'}">${trigLabel(t)}</span>`;}).join('')||'<span class="muted">없음</span>'}</div>`;
-    const hints=[];chars.forEach(c=>{if(!eps.some(e=>e.character_id===c.id))hints.push(`${c.name} 아직 에피소드 없음`);});
-    if(!eps.length)hints.push('에피소드를 추가하면 관계가 채워집니다');
-    if(hints.length)h+=`<div class="adv">⚠ ${hints.join(' · ')}</div>`;
-    h+=`</div>`;
-  });
-  el.innerHTML=h;
-}
+    const avg=eps.length?Math.round(eps.reduce((a,e)=>a+judgeEpisode(e).score,0)/eps.length):0;const pi=tropeInfo(st.central_trope),ts=pi&&pi.median_er>=baseER();
+    h+=`<div class="storybox"><div class="t">📖 ${st.title}</div><div class="k">트로프 ${st.central_trope} <span class="badge ${ts?'b-strong':'b-weak'}">${ts?'견인력↑':'약함'}</span></div>
+      <div style="margin-top:4px">캐릭터 <b>${chars.length}</b> · 에피소드 <b>${eps.length}</b> · 평균 <b>${avg}/60</b></div>
+      <div class="k" style="margin-top:4px">커버 트리거</div><div>${[...trigs].filter(Boolean).map(t=>`<span class="pill">${trigLabel(t)}</span>`).join('')||'없음'}</div></div>`;});
+  el.innerHTML=h;}
+
+/* ---------- 나무위키 스타일 메인스토리 정리 (발행 데이터) ---------- */
+let WIKI_MD={};
+function inlineMd(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');}
+function mdToHtml(md){const lines=md.split('\n');const out=[];const toc=[];let i=0;
+  while(i<lines.length){const ln=lines[i];
+    if(/^\|/.test(ln)){const tbl=[];while(i<lines.length&&/^\|/.test(lines[i])){tbl.push(lines[i]);i++;}
+      const rows=tbl.filter(r=>!/^\|[\s\-:|]+\|?$/.test(r.trim()));out.push('<table>');
+      rows.forEach((r,ri)=>{const cells=r.split('|').slice(1,-1).map(c=>c.trim());const tag=ri===0?'th':'td';out.push('<tr>'+cells.map(c=>`<${tag}>${inlineMd(c)}</${tag}>`).join('')+'</tr>');});out.push('</table>');continue;}
+    if(/^\s*-\s/.test(ln)){out.push('<ul>');while(i<lines.length&&/^\s*-\s/.test(lines[i])){out.push('<li>'+inlineMd(lines[i].replace(/^\s*-\s/,''))+'</li>');i++;}out.push('</ul>');continue;}
+    if(/^\d+\.\s/.test(ln)){out.push('<ol>');while(i<lines.length&&/^\d+\.\s/.test(lines[i])){out.push('<li>'+inlineMd(lines[i].replace(/^\d+\.\s/,''))+'</li>');i++;}out.push('</ol>');continue;}
+    if(/^###\s/.test(ln)){out.push('<h3>'+inlineMd(ln.slice(4))+'</h3>');i++;continue;}
+    if(/^##\s/.test(ln)){const t=ln.slice(3);toc.push(t);out.push('<h2>'+inlineMd(t)+'</h2>');i++;continue;}
+    if(/^#\s/.test(ln)){out.push('<h1>'+inlineMd(ln.slice(2))+'</h1>');i++;continue;}
+    if(/^>\s?/.test(ln)){out.push('<blockquote>'+inlineMd(ln.replace(/^>\s?/,''))+'</blockquote>');i++;continue;}
+    if(/^---+$/.test(ln.trim())){out.push('<hr>');i++;continue;}
+    if(ln.trim()===''){i++;continue;}
+    out.push('<p>'+inlineMd(ln)+'</p>');i++;}
+  if(toc.length){const th='<div class="toc"><div class="tt">목차</div><ol>'+toc.map(t=>'<li>'+inlineMd(t)+'</li>').join('')+'</ol></div>';const h1i=out.findIndex(x=>x.startsWith('<h1>'));out.splice(h1i>=0?h1i+1:0,0,th);}
+  return out.join('\n');}
+function buildStoryMarkdown(st){const w=WORLDS.find(x=>x.id===st.world_id);
+  const chars=pubChars().filter(c=>storyCharIds(st).includes(c.id));const eps=pubEps().filter(e=>e.story_id===st.id);
+  const pi=tropeInfo(st.central_trope),strong=pi&&pi.median_er>=baseER();const avg=eps.length?Math.round(eps.reduce((a,e)=>a+judgeEpisode(e).score,0)/eps.length):0;
+  let md=`# ${st.title}\n> ${st.logline||''}\n\n`;
+  md+=`## 1. 개요\n- **세계관**: ${w?w.name:st.world_id}${w&&w.tone?` — ${w.tone}`:''}\n- **중심 트로프**: ${st.central_trope}${pi?` (ER ${pi.median_er}% · ${strong?'저장 견인력↑':'평균 이하'})`:''}\n- **등장 캐릭터**: ${chars.length}명\n- **에피소드**: ${eps.length}편${eps.length?` · 평균 자동점수 ${avg}/60`:''}\n\n`;
+  if(w){md+=`## 2. 세계관 설정\n- **톤**: ${w.tone||'-'}\n- **배경**: ${w.setting||'-'}\n`;if((w.localization_rules||[]).length){md+=`- **이식 규칙**:\n`;w.localization_rules.forEach(r=>md+=`  - ${r}\n`);}md+=`\n`;}
+  md+=`## 3. 등장인물\n`;if(!chars.length)md+=`- (아직 없음)\n\n`;
+  chars.forEach(c=>{const ti=trigInfo(c.primary_trigger);md+=`### ${c.name}${c.archetype?` — ${c.archetype}`:''}\n- **1차 트리거**: ${trigLabel(c.primary_trigger)}${ti?` (ER ${ti.median_er}%)`:''}\n`;
+    if(c.secondary_trigger)md+=`- **2차 트리거**: ${trigLabel(c.secondary_trigger)}\n`;md+=`- **갭(강함↔약함)**: ${c.gap_surface||'-'} ↔ ${c.gap_hidden||'-'}\n`;
+    if(c.signature_action)md+=`- **시그니처 행동**: ${c.signature_action}\n`;if(c.first3s_hook)md+=`- **첫 3초 훅**: ${c.first3s_hook}\n`;
+    if(c.tension_partner)md+=`- **텐션 상대**: ${c.tension_partner}\n`;if(c.taboo_barrier)md+=`- **금기·장벽**: ${c.taboo_barrier}\n`;md+=`\n`;});
+  md+=`## 4. 전개 (Arc)\n> ${st.arc||'(미작성)'}\n\n## 5. 에피소드 목록\n`;
+  if(!eps.length)md+=`- (아직 없음)\n`;else{md+=`| 화 | 제목 | 주인공 | 회수 트리거 | 자동점수 |\n|---|---|---|---|---|\n`;eps.forEach((e,i)=>{const ch=CHARS.find(c=>c.id===e.character_id);md+=`| ${i+1} | ${e.title} | ${ch?ch.name:'-'} | ${trigLabel(e.target_trigger)} | ${judgeEpisode(e).score}/60 |\n`;});}
+  return md;}
+function renderWiki(){const el=document.getElementById('wiki');if(!el)return;const stories=pubStories();
+  if(!stories.length){el.innerHTML='<div class="muted">발행된 메인스토리가 없습니다. 발행하면 여기 나무위키 스타일로 자동 정리됩니다.</div>';return;}
+  WIKI_MD={};let h='';stories.forEach(st=>{const md=buildStoryMarkdown(st);WIKI_MD[st.id]=md;h+=`<div class="wikidoc"><div class="wikitools"><button class="mini" onclick='copyMd("${st.id}")'>📋 마크다운 복사</button></div>${mdToHtml(md)}</div>`;});
+  el.innerHTML=h;}
+function copyMd(id){const md=WIKI_MD[id]||'';if(navigator.clipboard)navigator.clipboard.writeText(md).then(()=>toast('마크다운 복사됨'),()=>toast('복사 실패'));else toast('복사 미지원');}
+
+/* ---------- 추천 (per tab) ---------- */
+function fixedWorld(){return WORLDS.find(w=>w.id==='world_highschool')||WORLDS.find(w=>w.name==='고등학교')||WORLDS[0]||null;}
+function recBox(inner){return `<div class="storybox" style="background:#f4f8ff;border-color:#cdddff"><div class="t">🎯 다음에 뭘 만들까 — 데이터 추천</div>${inner}<div class="k" style="margin-top:6px">🤖 AI 자동생성은 API 키 연결 시 활성화 (README).</div></div>`;}
+function recommendChar(worldId){const used=new Set(CHARS.filter(c=>c.world_id===worldId).map(c=>c.primary_trigger));
+  return (RULES?.trigger_ranking_grammar||[]).filter(t=>!used.has(t.tag)&&t.median_er>=baseER()).slice(0,3).map(t=>({tag:t.tag,label:t.label,er:t.median_er,arch:TRIG_ARCH[t.tag]||"기타"}));}
+function recommendStoryTrope(worldId){const used=new Set(STORIES.filter(s=>s.world_id===worldId).map(s=>s.central_trope));
+  return (RULES?.trope_ranking||[]).filter(t=>!t.low_sample&&!used.has(t.tag)&&t.median_er>=baseER()).slice(0,2);}
+function recommendEpisodeTarget(worldId){const chars=pubChars().filter(c=>c.world_id===worldId);const noEp=chars.filter(c=>!pubEps().some(e=>e.character_id===c.id));return noEp.length?noEp:chars;}
+function epTemplate(ch){const t=trigLabel(ch.primary_trigger);return {title:`${ch.name} — ${t} 한 방`,logline:`${ch.name}가 ${t}을(를) 정점에서 터뜨리는 30초.`,
+  HOOK:`0-3초: ${ch.name}가 ${t} 단서를 던짐(얼굴만 X, 관계 갈등 함께).`,SETUP:`3-12초: 왜 이 상황인지 최소 정보.`,BUILD:`12-30초: 라이벌/위기 투입, ${t} 작동.`,PAYOFF:`30-45초: ${t} 회수 정점.`,HOOKOUT:`마지막 3초: 다음 화 떡밥.`};}
+function autoId(p,s){return p+String(s||'new').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,10)+'_'+Math.random().toString(36).slice(2,5);}
+function renderRecommend(){renderStoryRec();renderCharRec();renderEpRec();}
+function renderStoryRec(){const el=document.getElementById('rec_story');if(!el)return;const w=fixedWorld();if(!w||!RULES){el.innerHTML='';return;}
+  const st=recommendStoryTrope(w.id);let inner=st.length?`<div class="k">추천 트로프: <b>${st[0].tag}</b> (ER ${st[0].median_er}%, 미사용)</div><div style="margin-top:8px"><button class="mini primary" onclick='applyStoryRec("${st[0].tag}")'>이 트로프로 채우기</button></div>`:`<div class="k">강한 트로프를 이미 다 썼어요.</div>`;el.innerHTML=recBox(inner);}
+function renderCharRec(){const el=document.getElementById('rec_char');if(!el)return;const w=fixedWorld();if(!w||!RULES){el.innerHTML='';return;}
+  const chars=CHARS.filter(c=>c.world_id===w.id),recs=recommendChar(w.id);let inner;
+  if(recs.length){const r=recs[0],tpl=ARCH_TPL[r.arch]||ARCH_TPL['기타'];
+    inner=`<div class="k">이미: ${chars.map(c=>trigLabel(c.primary_trigger)).join(', ')||'없음'} · 미사용 성과순</div><div style="margin-top:4px">⭐ ${r.label} → <b>${r.arch}</b> <span class="k">(ER ${r.er}%)</span></div><div class="k">갭 ${tpl.gs} ↔ ${tpl.gh}</div>
+      <div style="margin-top:8px"><button class="mini primary" onclick='applyRec("${w.id}","${r.tag}","${r.arch}")'>이 초안으로 채우기</button></div>${recs.length>1?`<div class="k" style="margin-top:6px">다음 후보: ${recs.slice(1).map(x=>x.label).join(', ')}</div>`:''}`;
+  }else inner=`<div class="k">강한 트리거를 다 썼어요.</div>`;el.innerHTML=recBox(inner);}
+function renderEpRec(){const el=document.getElementById('rec_ep');if(!el)return;const w=fixedWorld();if(!w||!RULES){el.innerHTML='';return;}
+  const chars=pubChars().filter(c=>c.world_id===w.id);let inner;
+  if(!chars.length)inner=`<div class="k">발행된 캐릭터를 먼저 만드세요.</div>`;
+  else{const targets=recommendEpisodeTarget(w.id),ch=targets[0];const why=pubEps().some(e=>e.character_id===ch.id)?'스토리 더 채우기':'아직 에피소드 없음';
+    inner=`<div class="k">추천 대상: <b>${ch.name}</b> (${why}) · 회수 ${trigLabel(ch.primary_trigger)}</div><div style="margin-top:8px"><button class="mini primary" onclick='applyEpRec("${ch.id}")'>이 캐릭터로 채우기</button></div>`;}
+  el.innerHTML=recBox(inner);}
+function applyStoryRec(trope){const w=fixedWorld();st_world.value=w.id;st_trope.value=trope;st_title.value='';st_log.value=`${w.name}에서 ${trope} 구도를 중심으로 벌어지는 이야기.`;st_arc.value='기→승→전→결';st_id.value=autoId('story_',trope);switchTab('addStory');toast('스토리 템플릿 채움');}
+function applyRec(worldId,tag,arch){const tpl=ARCH_TPL[arch]||ARCH_TPL['기타'];c_world.value=worldId;c_trig.value=tag;c_arch.value=arch;c_gs.value=tpl.gs;c_gh.value=tpl.gh;c_sig.value=tpl.sig;c_hook.value=tpl.hook;checkTrigDup();switchTab('addChar');toast('캐릭터 템플릿 채움');}
+function applyEpRec(charId){const ch=CHARS.find(c=>c.id===charId);if(!ch)return;const tpl=epTemplate(ch);e_char.value=charId;epCharChanged();const st=STORIES.find(s=>storyCharIds(s).includes(charId))||STORIES.find(s=>s.world_id===ch.world_id);if(st)e_story.value=st.id;e_trig.value=ch.primary_trigger;e_title.value=tpl.title;e_log.value=tpl.logline;e_hook.value=tpl.HOOK;e_setup.value=tpl.SETUP;e_build.value=tpl.BUILD;e_payoff.value=tpl.PAYOFF;e_hookout.value=tpl.HOOKOUT;e_id.value=autoId('ep_',ch.name);switchTab('addEp');toast('에피소드 템플릿 채움');}
+
+/* ---------- 드래프트함 ---------- */
+function renderDrafts(){const el=document.getElementById('drafts');const items=[
+  ...STORIES.filter(o=>!isPub(o)).map(o=>({type:'story',o,label:'📖 '+o.title})),
+  ...CHARS.filter(o=>!isPub(o)).map(o=>({type:'char',o,label:'🎭 '+o.name+' ('+trigLabel(o.primary_trigger)+')'})),
+  ...EPS.filter(o=>!isPub(o)).map(o=>({type:'ep',o,label:'▶ '+o.title})),
+  ...SBS.filter(o=>!isPub(o)).map(o=>({type:'sb',o,label:'🎬 '+o.id}))];
+  if(!items.length){el.innerHTML='<div class="muted">드래프트가 없습니다. 아래 탭에서 만들면 여기 쌓이고, 발행하면 DB(지도)로 올라갑니다.</div>';return;}
+  let h='';items.forEach(it=>{const j=it.type==='ep'?judgeEpisode(it.o):null;
+    h+=`<div class="draftrow"><b>${it.label}</b> <span class="badge b-draft">draft</span> <span class="k">${it.o.id}</span>
+      ${j?` <span class="k">자동 ${j.score}/60 ${j.fails.length?'('+j.fails.join(',')+')':'통과'}</span>`:''}
+      <div class="btns">
+        <button class="mini pub" onclick='publishRecord("${it.type}","${it.o.id}")'>✅ 발행</button>
+        ${it.type!=='sb'?`<button class="mini" onclick='editRecord("${it.type}","${it.o.id}")'>✏ 수정</button>`:''}
+        <button class="mini del" onclick='deleteRecord("${it.type}","${it.o.id}","${it.o.__fileId}")'>🗑 삭제</button>
+      </div></div>`;});
+  el.innerHTML=h;}
+function findRec(type,id){const arr={story:STORIES,char:CHARS,ep:EPS,sb:SBS}[type];return arr.find(x=>x.id===id);}
+function folderOf(type){return {story:FOLDERS.story,char:FOLDERS.char,ep:FOLDERS.ep,sb:FOLDERS.sb}[type];}
+async function publishRecord(type,id){const o=findRec(type,id);if(!o)return;const n=Object.assign({},o);n.status='published';n.updated_at=today();
+  try{toast('발행 중…');await driveUpdateJson(o.__fileId,n);toast('발행됨 → DB 반영');await loadAll();}catch(e){toast('발행 실패: '+e.message);}}
+async function deleteRecord(type,id,fileId){const o=findRec(type,id);if(!confirm((o?o.id:id)+' 을(를) 삭제할까요? (휴지통으로 이동)'))return;
+  try{toast('삭제 중…');await driveTrash(fileId||o.__fileId);toast('삭제됨');document.getElementById('detailCard').style.display='none';await loadAll();}catch(e){toast('삭제 실패: '+e.message);}}
+function editBanner(type){const map={char:'edit_char',story:'edit_story',ep:'edit_ep'};const id=map[type];if(!id)return;
+  document.getElementById(id).innerHTML=EDIT&&EDIT.type===type?`<div class="note info">✏ 수정 중: <b>${EDIT.id}</b> — 저장하면 덮어씁니다. <a href="#" onclick="cancelEdit('${type}');return false;">취소</a></div>`:'';}
+function cancelEdit(type){EDIT=null;editBanner(type);toast('수정 취소');}
+function editRecord(type,id){const o=findRec(type,id);if(!o)return;EDIT={type,id:o.id,fileId:o.__fileId,created_at:o.created_at,status:o.status,extra:o};
+  if(type==='char'){c_world.value=o.world_id;c_name.value=o.name;c_id.value=o.id;c_grade.value=o.grade_class||'';c_arch.value=o.archetype||'기타';c_trig.value=o.primary_trigger;c_trig2.value=o.secondary_trigger||'';c_gs.value=o.gap_surface||'';c_gh.value=o.gap_hidden||'';c_sig.value=o.signature_action||'';c_hook.value=o.first3s_hook||'';c_tp.value=o.tension_partner||'';c_taboo.value=o.taboo_barrier||'';switchTab('addChar');editBanner('char');}
+  else if(type==='story'){st_world.value=o.world_id;st_title.value=o.title;st_id.value=o.id;st_trope.value=o.central_trope;st_log.value=o.logline||'';st_arc.value=o.arc||'';switchTab('addStory');editBanner('story');}
+  else if(type==='ep'){e_char.value=o.character_id;e_story.value=o.story_id||'';e_title.value=o.title;e_id.value=o.id;e_trig.value=o.target_trigger;e_log.value=o.logline||'';const b=o.beats||{};e_hook.value=b.HOOK||'';e_setup.value=b.SETUP||'';e_build.value=b.BUILD||'';e_payoff.value=b.PAYOFF||'';e_hookout.value=b.HOOKOUT||'';switchTab('addEp');editBanner('ep');}
+  document.getElementById('detailCard').style.display='none';toast('수정 모드');}
 
 /* ---------- selectors ---------- */
 function opt(v,t){return `<option value="${v}">${t||v}</option>`;}
 function fillSelectors(){
   const trigOpts=(RULES?.trigger_ranking_grammar||[]).map(t=>opt(t.tag,`${t.median_er>=baseER()?'✅':'⚠'} ${t.label} (ER ${t.median_er})`)).join('');
   ['c_trig','c_trig2','e_trig'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=trigOpts;});
-  const tropeOpts=(RULES?.trope_ranking||[]).map(t=>opt(t.tag,`${t.median_er>=baseER()?'✅':'⚠'} ${t.tag} (ER ${t.median_er})`)).join('');
-  document.getElementById('st_trope').innerHTML=tropeOpts;
-  const worldOpts=WORLDS.map(w=>opt(w.id,w.name)).join('')||opt('','(세계관 먼저)');
-  document.getElementById('c_world').innerHTML=worldOpts;document.getElementById('st_world').innerHTML=worldOpts;
-  document.getElementById('e_char').innerHTML=CHARS.map(c=>opt(c.id,c.name)).join('')||opt('','(캐릭터 먼저)');
-  document.getElementById('e_story').innerHTML=STORIES.map(s=>opt(s.id,s.title)).join('')||opt('','(스토리 없음)');
+  document.getElementById('st_trope').innerHTML=(RULES?.trope_ranking||[]).map(t=>opt(t.tag,`${t.median_er>=baseER()?'✅':'⚠'} ${t.tag} (ER ${t.median_er})`)).join('');
+  const wo=WORLDS.map(w=>opt(w.id,w.name)).join('')||opt('','(세계관 없음)');
+  document.getElementById('c_world').innerHTML=wo;document.getElementById('st_world').innerHTML=wo;
+  document.getElementById('e_char').innerHTML=CHARS.map(c=>opt(c.id,c.name+(isPub(c)?'':' (draft)'))).join('')||opt('','(캐릭터 먼저)');
+  document.getElementById('e_story').innerHTML=STORIES.map(s=>opt(s.id,s.title+(isPub(s)?'':' (draft)'))).join('')||opt('','(스토리 없음)');
   document.getElementById('s_ep').innerHTML=EPS.map(e=>opt(e.id,e.title)).join('')||opt('','(에피소드 먼저)');
-  buildSbForm();checkTrigDup();epCharChanged();
-}
+  buildSbForm();checkTrigDup();epCharChanged();renderRecommend();}
 function checkTrigDup(){const w=document.getElementById('c_world').value,t=document.getElementById('c_trig').value;
-  const dup=CHARS.find(c=>c.world_id===w&&c.primary_trigger===t);const warn=document.getElementById('c_trigWarn'),btn=document.getElementById('c_submit');
+  const dup=CHARS.find(c=>c.world_id===w&&c.primary_trigger===t&&(!EDIT||EDIT.id!==c.id));const warn=document.getElementById('c_trigWarn'),btn=document.getElementById('c_submit');
   if(dup){warn.innerHTML=`<div class="note err">⛔ 이 세계관의 <b>${dup.name}</b>가 이미 이 트리거 사용중.</div>`;btn.disabled=true;}else{warn.innerHTML='';btn.disabled=false;}}
-function epCharChanged(){const cid=document.getElementById('e_char').value,ch=CHARS.find(c=>c.id===cid);
-  if(ch){document.getElementById('e_trig').value=ch.primary_trigger;const st=STORIES.find(s=>(s.character_ids||[]).includes(cid));if(st)document.getElementById('e_story').value=st.id;}}
-function buildSbForm(){const el=document.getElementById('sbCuts');el.innerHTML='';
-  for(let i=0;i<10;i++)el.innerHTML+=`<div style="border:1px solid #eee;border-radius:8px;padding:8px;margin-top:8px"><b>컷 ${i+1}</b> <span class="k">${TIMES[i]}</span>
-    <div class="row2"><label>프레이밍<select id="sb_fr_${i}">${FRAMING.map(v=>opt(v)).join('')}</select></label><label>시선<select id="sb_gz_${i}">${GAZE.map(v=>opt(v)).join('')}</select></label></div>
-    <label>앵글<select id="sb_an_${i}">${ANGLE.map(v=>opt(v)).join('')}</select></label>
-    <label>[생성] 비트<textarea id="sb_gb_${i}"></textarea></label><label>[후편집] 자막<input id="sb_ed_${i}" value="자막 없음"></label><label>연출의도<input id="sb_in_${i}"></label></div>`;}
+document.getElementById('c_world').addEventListener('change',checkTrigDup);
+document.getElementById('c_trig').addEventListener('change',checkTrigDup);
+function epCharChanged(){const cid=document.getElementById('e_char').value,ch=CHARS.find(c=>c.id===cid);if(ch){document.getElementById('e_trig').value=ch.primary_trigger;const st=STORIES.find(s=>(s.character_ids||[]).includes(cid));if(st)document.getElementById('e_story').value=st.id;}}
+function buildSbForm(){const el=document.getElementById('sbCuts');el.innerHTML='';for(let i=0;i<10;i++)el.innerHTML+=`<div style="border:1px solid #eee;border-radius:8px;padding:8px;margin-top:8px"><b>컷 ${i+1}</b> <span class="k">${TIMES[i]}</span><div class="row2"><label>프레이밍<select id="sb_fr_${i}">${FRAMING.map(v=>opt(v)).join('')}</select></label><label>시선<select id="sb_gz_${i}">${GAZE.map(v=>opt(v)).join('')}</select></label></div><label>앵글<select id="sb_an_${i}">${ANGLE.map(v=>opt(v)).join('')}</select></label><label>[생성] 비트<textarea id="sb_gb_${i}"></textarea></label><label>[후편집] 자막<input id="sb_ed_${i}" value="자막 없음"></label><label>연출의도<input id="sb_in_${i}"></label></div>`;}
 
-/* ---------- add ---------- */
-async function addWorld(){const id=w_id.value.trim(),name=w_name.value.trim();if(!id||!name)return msg('w_msg','ID·이름 필수','err');
-  const obj={id,name,tone:w_tone.value,setting:w_setting.value,localization_rules:w_rules.value.split('\n').map(s=>s.trim()).filter(Boolean),created_at:today(),updated_at:today()};
-  try{msg('w_msg','<span class="spin"></span> 저장…','info');await createRec(FOLDERS.world,id+'.json',obj);toast('세계관 추가됨');await loadAll();switchTab('summary');}catch(e){msg('w_msg','실패: '+e.message,'err');}}
-async function addStory(){const id=st_id.value.trim(),title=st_title.value.trim(),world=st_world.value;if(!id||!title||!world)return msg('st_msg','ID·제목·세계관 필수','err');
-  const obj={id,world_id:world,title,central_trope:st_trope.value,logline:st_log.value,character_ids:[],arc:st_arc.value,created_at:today(),updated_at:today()};
-  try{msg('st_msg','<span class="spin"></span> 저장…','info');await createRec(FOLDERS.story,id+'.json',obj);toast('메인스토리 추가됨');await loadAll();switchTab('summary');}catch(e){msg('st_msg','실패: '+e.message,'err');}}
-async function addChar(){const id=c_id.value.trim(),name=c_name.value.trim(),world=c_world.value,trig=c_trig.value;
-  if(!id||!name||!world)return msg('c_msg','ID·이름·세계관 필수','err');
-  if(CHARS.find(c=>c.world_id===world&&c.primary_trigger===trig))return msg('c_msg','트리거 중복','err');
-  const obj={id,world_id:world,name,grade_class:c_grade.value,archetype:c_arch.value,primary_trigger:trig,secondary_trigger:c_trig2.value,gap_surface:c_gs.value,gap_hidden:c_gh.value,signature_action:c_sig.value,first3s_hook:c_hook.value,tension_partner:c_tp.value,taboo_barrier:c_taboo.value,episode_ids:[],created_at:today(),updated_at:today()};
-  try{msg('c_msg','<span class="spin"></span> 저장…','info');await createRec(FOLDERS.char,id+'.json',obj);toast('캐릭터 추가됨 · 이제 에피소드로 스토리에 연결하세요');await loadAll();switchTab('addEp');}catch(e){msg('c_msg','실패: '+e.message,'err');}}
-async function addEp(){const id=e_id.value.trim(),title=e_title.value.trim(),ch=e_char.value;if(!id||!title||!ch)return msg('e_msg','ID·제목·캐릭터 필수','err');
-  const obj={id,character_id:ch,story_id:e_story.value,title,target_trigger:e_trig.value,logline:e_log.value,beats:{HOOK:e_hook.value,SETUP:e_setup.value,BUILD:e_build.value,PAYOFF:e_payoff.value,HOOKOUT:e_hookout.value},storyboard_id:"",judge_score:null,status:"draft",published_at:null,metrics:{views:null,likes:null,comments:null,shares:null,saves:null,duration_s:null,er_pct:null,save_rate_pct:null},created_at:today(),updated_at:today()};
-  try{msg('e_msg','<span class="spin"></span> 저장…','info');await createRec(FOLDERS.ep,id+'.json',obj);toast('에피소드 추가됨 → 관계 갱신');await loadAll();switchTab('summary');}catch(e){msg('e_msg','실패: '+e.message,'err');}}
+/* ---------- add / update (default status=draft) ---------- */
+async function addStory(){const id=(EDIT&&EDIT.type==='story')?EDIT.id:st_id.value.trim(),title=st_title.value.trim(),world=st_world.value;if(!id||!title||!world)return msg('st_msg','ID·제목·세계관 필수','err');
+  const obj={id,world_id:world,title,central_trope:st_trope.value,logline:st_log.value,character_ids:(EDIT&&EDIT.extra&&EDIT.extra.character_ids)||[],arc:st_arc.value,status:(EDIT&&EDIT.type==='story')?EDIT.status:'draft',created_at:(EDIT&&EDIT.type==='story')?EDIT.created_at:today(),updated_at:today()};
+  try{msg('st_msg','<span class="spin"></span> 저장…','info');if(EDIT&&EDIT.type==='story')await driveUpdateJson(EDIT.fileId,obj);else await createRec(FOLDERS.story,id+'.json',obj);EDIT=null;toast('저장됨');await loadAll();switchTab('drafts');}catch(e){msg('st_msg','실패: '+e.message,'err');}}
+async function addChar(){const id=(EDIT&&EDIT.type==='char')?EDIT.id:c_id.value.trim(),name=c_name.value.trim(),world=c_world.value,trig=c_trig.value;if(!id||!name||!world)return msg('c_msg','ID·이름·세계관 필수','err');
+  if(CHARS.find(c=>c.world_id===world&&c.primary_trigger===trig&&(!EDIT||EDIT.id!==c.id)))return msg('c_msg','트리거 중복','err');
+  const obj={id,world_id:world,name,grade_class:c_grade.value,archetype:c_arch.value,primary_trigger:trig,secondary_trigger:c_trig2.value,gap_surface:c_gs.value,gap_hidden:c_gh.value,signature_action:c_sig.value,first3s_hook:c_hook.value,tension_partner:c_tp.value,taboo_barrier:c_taboo.value,episode_ids:(EDIT&&EDIT.extra&&EDIT.extra.episode_ids)||[],status:(EDIT&&EDIT.type==='char')?EDIT.status:'draft',created_at:(EDIT&&EDIT.type==='char')?EDIT.created_at:today(),updated_at:today()};
+  try{msg('c_msg','<span class="spin"></span> 저장…','info');if(EDIT&&EDIT.type==='char')await driveUpdateJson(EDIT.fileId,obj);else await createRec(FOLDERS.char,id+'.json',obj);EDIT=null;toast('저장됨');await loadAll();switchTab('drafts');}catch(e){msg('c_msg','실패: '+e.message,'err');}}
+async function addEp(){const id=(EDIT&&EDIT.type==='ep')?EDIT.id:e_id.value.trim(),title=e_title.value.trim(),ch=e_char.value;if(!id||!title||!ch)return msg('e_msg','ID·제목·캐릭터 필수','err');
+  const ex=EDIT&&EDIT.type==='ep'?EDIT.extra:null;
+  const obj={id,character_id:ch,story_id:e_story.value,title,target_trigger:e_trig.value,logline:e_log.value,beats:{HOOK:e_hook.value,SETUP:e_setup.value,BUILD:e_build.value,PAYOFF:e_payoff.value,HOOKOUT:e_hookout.value},storyboard_id:ex?ex.storyboard_id:"",judge_score:null,status:ex?EDIT.status:'draft',published_at:ex?ex.published_at:null,metrics:ex?ex.metrics:{views:null,likes:null,comments:null,shares:null,saves:null,duration_s:null,er_pct:null,save_rate_pct:null},created_at:ex?EDIT.created_at:today(),updated_at:today()};
+  try{msg('e_msg','<span class="spin"></span> 저장…','info');if(EDIT&&EDIT.type==='ep')await driveUpdateJson(EDIT.fileId,obj);else await createRec(FOLDERS.ep,id+'.json',obj);EDIT=null;toast('저장됨');await loadAll();switchTab('drafts');}catch(e){msg('e_msg','실패: '+e.message,'err');}}
 async function addSb(){const id=s_id.value.trim(),ep=s_ep.value;if(!id||!ep)return msg('s_msg','ID·에피소드 필수','err');
   const cuts=[];for(let i=0;i<10;i++)cuts.push({cut:i+1,time:TIMES[i],framing:document.getElementById('sb_fr_'+i).value,gaze:document.getElementById('sb_gz_'+i).value,angle:document.getElementById('sb_an_'+i).value,gen_beats:document.getElementById('sb_gb_'+i).value,edit_subtitle:document.getElementById('sb_ed_'+i).value,intent:document.getElementById('sb_in_'+i).value});
-  const obj={id,episode_id:ep,format:"POV_남캐1인_30초_10컷_3초고정",cuts,created_at:today(),updated_at:today()};
-  try{msg('s_msg','<span class="spin"></span> 저장…','info');await createRec(FOLDERS.sb,id+'.json',obj);toast('스토리보드 추가됨');await loadAll();switchTab('summary');}catch(e){msg('s_msg','실패: '+e.message,'err');}}
+  const obj={id,episode_id:ep,format:"POV_남캐1인_30초_10컷_3초고정",cuts,status:'draft',created_at:today(),updated_at:today()};
+  try{msg('s_msg','<span class="spin"></span> 저장…','info');await createRec(FOLDERS.sb,id+'.json',obj);toast('저장됨');await loadAll();switchTab('drafts');}catch(e){msg('s_msg','실패: '+e.message,'err');}}
 
 /* ---------- tabs ---------- */
 function switchTab(tab){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
-  ['summary','addChar','addEp','addWorld','addStory','addSb'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==tab));}
+  ['drafts','summary','addStory','addChar','addEp','addSb'].forEach(t=>{const el=document.getElementById('tab-'+t);if(el)el.classList.toggle('hidden',t!==tab);});}
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
 </script>
 </body>
