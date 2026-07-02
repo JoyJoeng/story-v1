@@ -411,7 +411,7 @@ function buildStoryMarkdown(st){const w=WORLDS.find(x=>x.id===st.world_id);
   return md;}
 function renderWiki(){const el=document.getElementById('wiki');if(!el)return;const stories=pubStories();
   if(!stories.length){el.innerHTML='<div class="muted">발행된 메인스토리가 없습니다. 발행하면 여기 나무위키 스타일로 자동 정리됩니다.</div>';return;}
-  WIKI_MD={};let h='';stories.forEach(st=>{const md=buildStoryMarkdown(st);WIKI_MD[st.id]=md;h+=`<div class="wikidoc"><div class="wikitools"><button class="mini" onclick='copyMd("${st.id}")'>📋 마크다운 복사</button></div>${mdToHtml(md)}</div>`;});
+  WIKI_MD={};let h='';stories.forEach(st=>{const md=buildStoryMarkdown(st);WIKI_MD[st.id]=md;h+=`<div class="wikidoc"><div class="wikitools"><button class="mini" onclick='editRecord("story","${st.id}","${st.__fileId||''}")'>✏ 수정</button> <button class="mini" onclick='copyMd("${st.id}")'>📋 마크다운 복사</button></div>${mdToHtml(md)}</div>`;});
   el.innerHTML=h;}
 function copyMd(id){const md=WIKI_MD[id]||'';if(navigator.clipboard)navigator.clipboard.writeText(md).then(()=>toast('마크다운 복사됨'),()=>toast('복사 실패'));else toast('복사 미지원');}
 
@@ -498,7 +498,7 @@ async function deleteRecord(type,id,fileId){const o=findRec(type,id);if(!confirm
 function editBanner(type){const map={char:'edit_char',story:'edit_story',ep:'edit_ep'};const id=map[type];if(!id)return;
   document.getElementById(id).innerHTML=EDIT&&EDIT.type===type?`<div class="note info">✏ 수정 중: <b>${EDIT.id}</b> — 저장하면 덮어씁니다. <a href="#" onclick="cancelEdit('${type}');return false;">취소</a></div>`:'';}
 function cancelEdit(type){EDIT=null;editBanner(type);toast('수정 취소');}
-function editRecord(type,id){const o=findRec(type,id);if(!o)return;EDIT={type,id:o.id,fileId:o.__fileId,created_at:o.created_at,status:o.status,extra:o};
+function editRecord(type,id,fileId){const o=(fileId&&({story:STORIES,char:CHARS,ep:EPS,sb:SBS}[type]||[]).find(x=>x.__fileId===fileId))||findRec(type,id);if(!o)return;EDIT={type,id:o.id,fileId:o.__fileId,created_at:o.created_at,status:o.status,extra:o};
   if(type==='char'){c_world.value=o.world_id;c_name.value=o.name;c_id.value=o.id;c_grade.value=o.grade_class||'';c_arch.value=o.archetype||'기타';c_trig.value=o.primary_trigger;c_trig2.value=o.secondary_trigger||'';c_gs.value=o.gap_surface||'';c_gh.value=o.gap_hidden||'';c_sig.value=o.signature_action||'';c_hook.value=o.first3s_hook||'';c_tp.value=o.tension_partner||'';c_taboo.value=o.taboo_barrier||'';switchTab('addChar');editBanner('char');}
   else if(type==='story'){st_world.value=o.world_id;st_title.value=o.title;st_id.value=o.id;st_trope.value=o.central_trope;st_log.value=o.logline||'';st_arc.value=o.arc||'';switchTab('addStory');editBanner('story');}
   else if(type==='ep'){e_char.value=o.character_id;e_story.value=o.story_id||'';e_title.value=o.title;e_id.value=o.id;e_trig.value=o.target_trigger;e_log.value=o.logline||'';const b=o.beats||{};e_hook.value=b.HOOK||'';e_setup.value=b.SETUP||'';e_build.value=b.BUILD||'';e_payoff.value=b.PAYOFF||'';e_hookout.value=b.HOOKOUT||'';switchTab('addEp');editBanner('ep');}
