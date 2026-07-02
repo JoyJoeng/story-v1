@@ -91,6 +91,19 @@ label{display:block;font-size:12px;color:#555;margin-top:9px;font-weight:600}
     <button class="mini" onclick="loadAll()">↻ 새로고침</button>
     <button class="mini" onclick="signOut()">로그아웃</button> <span id="status"></span></div>
 
+  <details class="card" id="aiCard" style="padding:12px">
+    <summary style="cursor:pointer;font-weight:700">🤖 AI 설정 <span class="muted" style="font-weight:400">— OpenAI 키로 초안 자동생성</span></summary>
+    <div class="note info" style="margin:8px 0">키는 <b>이 브라우저에만</b> 저장되고(localStorage) 서버로 전송되지 않습니다. 공개 사이트에 노출되지 않아요.</div>
+    <label>OpenAI API 키 <input id="ai_key" type="password" placeholder="sk-..." autocomplete="off"></label>
+    <label>모델 <select id="ai_model">
+      <option value="gpt-4o-mini">gpt-4o-mini (빠르고 저렴)</option>
+      <option value="gpt-4o">gpt-4o (고품질)</option>
+      <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+    </select></label>
+    <div style="margin-top:10px"><button class="mini primary" onclick="saveAiCfg()">저장</button> <button class="mini" onclick="clearAiCfg()">키 삭제</button> <span id="ai_cfgmsg" class="k"></span></div>
+    <div class="k" style="margin-top:6px">키 발급: platform.openai.com/api-keys · 사용 요금은 본인 OpenAI 계정에 청구됩니다.</div>
+  </details>
+
   <div class="card">
     <h2>🕸 구조 지도 <span class="muted">발행된 것만 표시 · 메인스토리 ─ 캐릭터 → 에피소드</span></h2>
     <div id="map"><span class="spin"></span> 불러오는 중…</div>
@@ -404,7 +417,8 @@ function copyMd(id){const md=WIKI_MD[id]||'';if(navigator.clipboard)navigator.cl
 
 /* ---------- 추천 (per tab) ---------- */
 function fixedWorld(){return WORLDS.find(w=>w.id==='world_highschool')||WORLDS.find(w=>w.name==='고등학교')||WORLDS[0]||null;}
-function recBox(inner){return `<div class="storybox" style="background:#f4f8ff;border-color:#cdddff"><div class="t">🎯 다음에 뭘 만들까 — 데이터 추천</div>${inner}<div class="k" style="margin-top:6px">🤖 AI 자동생성은 API 키 연결 시 활성화 (README).</div></div>`;}
+function aiBtn(call){return `<div style="margin-top:6px"><button class="mini" onclick="${call}">🤖 AI로 초안 생성</button></div>`;}
+function recBox(inner,ai){return `<div class="storybox" style="background:#f4f8ff;border-color:#cdddff"><div class="t">🎯 다음에 뭘 만들까 — 데이터 추천</div>${inner}${ai||''}<div class="k" style="margin-top:6px">${aiOn()?'🤖 AI 생성 활성화됨':'🤖 AI 자동생성: 상단 <b>AI 설정</b>에 OpenAI 키를 넣으면 활성화'}</div></div>`;}
 function recommendChar(worldId){const used=new Set(CHARS.filter(c=>c.world_id===worldId).map(c=>c.primary_trigger));
   return (RULES?.trigger_ranking_grammar||[]).filter(t=>!used.has(t.tag)&&t.median_er>=baseER()).slice(0,3).map(t=>({tag:t.tag,label:t.label,er:t.median_er,arch:TRIG_ARCH[t.tag]||"기타"}));}
 function recommendStoryTrope(worldId){const used=new Set(STORIES.filter(s=>s.world_id===worldId).map(s=>s.central_trope));
@@ -415,22 +429,49 @@ function epTemplate(ch){const t=trigLabel(ch.primary_trigger);return {title:`${c
 function autoId(p,s){return p+String(s||'new').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,10)+'_'+Math.random().toString(36).slice(2,5);}
 function renderRecommend(){renderStoryRec();renderCharRec();renderEpRec();}
 function renderStoryRec(){const el=document.getElementById('rec_story');if(!el)return;const w=fixedWorld();if(!w||!RULES){el.innerHTML='';return;}
-  const st=recommendStoryTrope(w.id);let inner=st.length?`<div class="k">추천 트로프: <b>${st[0].tag}</b> (ER ${st[0].median_er}%, 미사용)</div><div style="margin-top:8px"><button class="mini primary" onclick='applyStoryRec("${st[0].tag}")'>이 트로프로 채우기</button></div>`:`<div class="k">강한 트로프를 이미 다 썼어요.</div>`;el.innerHTML=recBox(inner);}
+  const st=recommendStoryTrope(w.id);let inner=st.length?`<div class="k">추천 트로프: <b>${st[0].tag}</b> (ER ${st[0].median_er}%, 미사용)</div><div style="margin-top:8px"><button class="mini primary" onclick='applyStoryRec("${st[0].tag}")'>이 트로프로 채우기</button></div>`:`<div class="k">강한 트로프를 이미 다 썼어요.</div>`;el.innerHTML=recBox(inner, aiOn()&&st.length?aiBtn(`aiFillStory('${st[0].tag}')`):'');}
 function renderCharRec(){const el=document.getElementById('rec_char');if(!el)return;const w=fixedWorld();if(!w||!RULES){el.innerHTML='';return;}
   const chars=CHARS.filter(c=>c.world_id===w.id),recs=recommendChar(w.id);let inner;
   if(recs.length){const r=recs[0],tpl=ARCH_TPL[r.arch]||ARCH_TPL['기타'];
     inner=`<div class="k">이미: ${chars.map(c=>trigLabel(c.primary_trigger)).join(', ')||'없음'} · 미사용 성과순</div><div style="margin-top:4px">⭐ ${r.label} → <b>${r.arch}</b> <span class="k">(ER ${r.er}%)</span></div><div class="k">갭 ${tpl.gs} ↔ ${tpl.gh}</div>
       <div style="margin-top:8px"><button class="mini primary" onclick='applyRec("${w.id}","${r.tag}","${r.arch}")'>이 초안으로 채우기</button></div>${recs.length>1?`<div class="k" style="margin-top:6px">다음 후보: ${recs.slice(1).map(x=>x.label).join(', ')}</div>`:''}`;
-  }else inner=`<div class="k">강한 트리거를 다 썼어요.</div>`;el.innerHTML=recBox(inner);}
+  }else inner=`<div class="k">강한 트리거를 다 썼어요.</div>`;el.innerHTML=recBox(inner, aiOn()&&recs.length?aiBtn(`aiFillChar('${w.id}','${recs[0].tag}','${recs[0].arch}')`):'');}
 function renderEpRec(){const el=document.getElementById('rec_ep');if(!el)return;const w=fixedWorld();if(!w||!RULES){el.innerHTML='';return;}
   const chars=pubChars().filter(c=>c.world_id===w.id);let inner;
   if(!chars.length)inner=`<div class="k">발행된 캐릭터를 먼저 만드세요.</div>`;
   else{const targets=recommendEpisodeTarget(w.id),ch=targets[0];const why=pubEps().some(e=>e.character_id===ch.id)?'스토리 더 채우기':'아직 에피소드 없음';
-    inner=`<div class="k">추천 대상: <b>${ch.name}</b> (${why}) · 회수 ${trigLabel(ch.primary_trigger)}</div><div style="margin-top:8px"><button class="mini primary" onclick='applyEpRec("${ch.id}")'>이 캐릭터로 채우기</button></div>`;}
+    inner=`<div class="k">추천 대상: <b>${ch.name}</b> (${why}) · 회수 ${trigLabel(ch.primary_trigger)}</div><div style="margin-top:8px"><button class="mini primary" onclick='applyEpRec("${ch.id}")'>이 캐릭터로 채우기</button></div>${aiOn()?aiBtn(`aiFillEp('${ch.id}')`):''}`;}
   el.innerHTML=recBox(inner);}
 function applyStoryRec(trope){const w=fixedWorld();st_world.value=w.id;st_trope.value=trope;st_title.value='';st_log.value=`${w.name}에서 ${trope} 구도를 중심으로 벌어지는 이야기.`;st_arc.value='기→승→전→결';st_id.value=autoId('story_',trope);switchTab('addStory');toast('스토리 템플릿 채움');}
 function applyRec(worldId,tag,arch){const tpl=ARCH_TPL[arch]||ARCH_TPL['기타'];c_world.value=worldId;c_trig.value=tag;c_arch.value=arch;c_gs.value=tpl.gs;c_gh.value=tpl.gh;c_sig.value=tpl.sig;c_hook.value=tpl.hook;checkTrigDup();switchTab('addChar');toast('캐릭터 템플릿 채움');}
 function applyEpRec(charId){const ch=CHARS.find(c=>c.id===charId);if(!ch)return;const tpl=epTemplate(ch);e_char.value=charId;epCharChanged();const st=STORIES.find(s=>storyCharIds(s).includes(charId))||STORIES.find(s=>s.world_id===ch.world_id);if(st)e_story.value=st.id;e_trig.value=ch.primary_trigger;e_title.value=tpl.title;e_log.value=tpl.logline;e_hook.value=tpl.HOOK;e_setup.value=tpl.SETUP;e_build.value=tpl.BUILD;e_payoff.value=tpl.PAYOFF;e_hookout.value=tpl.HOOKOUT;e_id.value=autoId('ep_',ch.name);switchTab('addEp');toast('에피소드 템플릿 채움');}
+
+/* ---------- AI 자동생성 (OpenAI 키 = 이 브라우저 localStorage에만 저장) ---------- */
+function aiKey(){return (localStorage.getItem('OPENAI_KEY')||'').trim();}
+function aiModel(){return localStorage.getItem('OPENAI_MODEL')||'gpt-4o-mini';}
+function aiOn(){return !!aiKey();}
+function initAiCfg(){const k=document.getElementById('ai_key');if(k)k.value=aiKey();const m=document.getElementById('ai_model');if(m)m.value=aiModel();const s=document.getElementById('ai_cfgmsg');if(s)s.textContent=aiOn()?'활성화됨':'키 없음';}
+function saveAiCfg(){localStorage.setItem('OPENAI_KEY',document.getElementById('ai_key').value.trim());localStorage.setItem('OPENAI_MODEL',document.getElementById('ai_model').value);document.getElementById('ai_cfgmsg').textContent=aiOn()?'활성화됨':'키 없음';toast('AI 설정 저장');if(RULES)renderRecommend();}
+function clearAiCfg(){localStorage.removeItem('OPENAI_KEY');const k=document.getElementById('ai_key');if(k)k.value='';document.getElementById('ai_cfgmsg').textContent='삭제됨';toast('키 삭제');if(RULES)renderRecommend();}
+const AI_SYS='너는 한국 숏폼(30~45초) 세로 드라마 기획자다. 훅이 강하고 캐릭터의 트리거를 정점에서 회수하는 기획을 한다. 항상 지정된 키만 가진 JSON 하나로만 답한다.';
+async function aiJSON(user){if(!aiOn())throw new Error('OpenAI 키가 없습니다 — 상단 "AI 설정"에서 입력하세요');
+  const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+aiKey()},
+    body:JSON.stringify({model:aiModel(),temperature:0.9,response_format:{type:'json_object'},messages:[{role:'system',content:AI_SYS},{role:'user',content:user}]})});
+  if(!r.ok){const t=await r.text();throw new Error(r.status===401?'키 인증 실패(401) — 키를 확인하세요':'호출 실패 '+r.status+' '+t.slice(0,100));}
+  return JSON.parse((await r.json()).choices[0].message.content);}
+async function aiFillStory(trope){const w=fixedWorld();if(!w)return;switchTab('addStory');msg('st_msg','<span class="spin"></span> AI가 메인스토리 초안 생성 중…','info');
+  try{const o=await aiJSON(`세계관: ${w.name}\n중심 트로프: ${trope}\n\n이 세계관·트로프로 숏폼 드라마 메인스토리 1개를 기획하라. JSON 키만:\n{"title":"제목","logline":"한 줄 로그라인","arc":"기→승→전→결 흐름 요약"}`);
+    st_world.value=w.id;st_trope.value=trope;st_title.value=o.title||'';st_log.value=o.logline||'';st_arc.value=o.arc||'';st_id.value=autoId('story_',o.title||trope);msg('st_msg','AI 초안 생성됨 · 확인 후 저장하세요','info');toast('AI 초안 생성');
+  }catch(e){msg('st_msg','AI 실패: '+e.message,'err');}}
+async function aiFillChar(worldId,tag,arch){const w=WORLDS.find(x=>x.id===worldId);switchTab('addChar');msg('c_msg','<span class="spin"></span> AI가 캐릭터 초안 생성 중…','info');
+  try{const o=await aiJSON(`세계관: ${w?w.name:''}\n회수할 1차 트리거: ${trigLabel(tag)}\n아키타입: ${arch}\n\n이 조건의 남주 캐릭터 1명을 기획하라. JSON 키만:\n{"name":"이름","gap_surface":"겉모습·강한 면","gap_hidden":"그 사람 앞에서만 드러나는 약한 면","signature_action":"시그니처 행동 한 문장","first3s_hook":"첫 3초 훅 장면 한 문장"}`);
+    c_world.value=worldId;c_trig.value=tag;c_arch.value=arch;c_name.value=o.name||'';c_gs.value=o.gap_surface||'';c_gh.value=o.gap_hidden||'';c_sig.value=o.signature_action||'';c_hook.value=o.first3s_hook||'';c_id.value=autoId('char_',o.name||arch);checkTrigDup();msg('c_msg','AI 초안 생성됨 · 확인 후 저장하세요','info');toast('AI 초안 생성');
+  }catch(e){msg('c_msg','AI 실패: '+e.message,'err');}}
+async function aiFillEp(charId){const ch=CHARS.find(c=>c.id===charId);if(!ch)return;const w=WORLDS.find(x=>x.id===ch.world_id),st=STORIES.find(s=>storyCharIds(s).includes(charId))||STORIES.find(s=>s.world_id===ch.world_id);
+  switchTab('addEp');msg('e_msg','<span class="spin"></span> AI가 에피소드 초안 생성 중…','info');
+  try{const o=await aiJSON(`세계관: ${w?w.name:''}\n주인공: ${ch.name} (아키타입 ${ch.archetype||''})\n회수 트리거: ${trigLabel(ch.primary_trigger)}\n겉: ${ch.gap_surface||''} / 그 앞에서만: ${ch.gap_hidden||''}\n메인스토리: ${st?st.title:'미정'}\n\n이 캐릭터가 트리거를 정점에서 터뜨리는 30~45초 숏폼 1화를 기획하라. JSON 키만:\n{"title":"제목","logline":"한 줄 줄거리","hook":"0-3초","setup":"3-12초","build":"12-30초","payoff":"30-45초","hookout":"마지막 3초 다음화 떡밥"}`);
+    e_char.value=charId;epCharChanged();if(st)e_story.value=st.id;e_trig.value=ch.primary_trigger;e_title.value=o.title||'';e_log.value=o.logline||'';e_hook.value=o.hook||'';e_setup.value=o.setup||'';e_build.value=o.build||'';e_payoff.value=o.payoff||'';e_hookout.value=o.hookout||'';e_id.value=autoId('ep_',ch.name);msg('e_msg','AI 초안 생성됨 · 확인 후 저장하세요','info');toast('AI 초안 생성');
+  }catch(e){msg('e_msg','AI 실패: '+e.message,'err');}}
 
 /* ---------- 드래프트함 ---------- */
 function renderDrafts(){const el=document.getElementById('drafts');const items=[
@@ -504,6 +545,7 @@ async function addSb(){const id=s_id.value.trim(),ep=s_ep.value;if(!id||!ep)retu
 function switchTab(tab){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   ['drafts','summary','addStory','addChar','addEp','addSb'].forEach(t=>{const el=document.getElementById('tab-'+t);if(el)el.classList.toggle('hidden',t!==tab);});}
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+initAiCfg();
 </script>
 </body>
 </html>
