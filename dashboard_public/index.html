@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>숏폼 기획 대시보드</title>
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:#f7f7f8;color:#1c1c1e;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:14px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 2px}
+.sub{color:#6b6b70;font-size:12px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:820px){.grid{grid-template-columns:340px 1fr}}
+.card{background:#fff;border:1px solid #e6e6ea;border-radius:12px;padding:14px}
+.card h2{font-size:14px;margin:0 0 10px;display:flex;align-items:center;gap:6px}
+.muted{color:#8a8a90;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{text-align:left;padding:5px 6px;border-bottom:1px solid #f0f0f2}
+th{color:#8a8a90;font-weight:600}
+.badge{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-strong{background:#e6f7ec;color:#137a3d}.b-weak{background:#fdecec;color:#c0392b}
+.b-neutral{background:#eef0f4;color:#555}.b-blue{background:#e8f0fe;color:#1a56c4}
+.world{border:1px solid #e6e6ea;border-radius:10px;padding:10px;margin-bottom:10px}
+.world>.whead{font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.char{border-left:3px solid #d9d9de;padding:8px 10px;margin:8px 0 8px 4px;background:#fbfbfc;border-radius:0 8px 8px 0}
+.char .chead{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.char .name{font-weight:600}
+.ep{font-size:12px;color:#444;margin:4px 0 0 12px;padding:4px 8px;background:#fff;border:1px solid #eee;border-radius:6px}
+.ep .score{float:right;font-weight:700}
+button{font:inherit;border:1px solid #cfcfd6;background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
+button.primary{background:#1c1c1e;color:#fff;border-color:#1c1c1e}
+button.mini{padding:2px 8px;font-size:12px}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,select,textarea{font:inherit;width:100%;padding:7px 8px;border:1px solid #d4d4da;border-radius:8px;background:#fff;margin-top:3px}
+textarea{min-height:44px;resize:vertical}
+label{display:block;font-size:12px;color:#555;margin-top:9px;font-weight:600}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tabs button.active{background:#1c1c1e;color:#fff;border-color:#1c1c1e}
+.hidden{display:none}
+.note{font-size:12px;padding:8px 10px;border-radius:8px;margin-top:8px}
+.note.err{background:#fdecec;color:#c0392b}.note.ok{background:#e6f7ec;color:#137a3d}.note.info{background:#eef4ff;color:#1a56c4}
+.pill{font-size:11px;background:#eef0f4;color:#555;border-radius:6px;padding:1px 6px}
+.k{color:#8a8a90;font-size:11px}
+.detail{font-size:12px}.detail div{margin:2px 0}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;z-index:50}
+#toast.show{opacity:1}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid #ccc;border-top-color:#1c1c1e;border-radius:50%;animation:s .7s linear infinite;vertical-align:-1px}
+@keyframes s{to{transform:rotate(360deg)}}
+.adv{font-size:11px;color:#a06000;background:#fff7e6;border-radius:6px;padding:4px 8px;margin-top:4px}
+#gate{max-width:520px;margin:8vh auto;text-align:center}
+#gate .card{padding:26px}
+.gbtn{display:inline-flex;align-items:center;gap:8px;background:#1a73e8;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+
+<!-- ============ 로그인 게이트 ============ -->
+<div id="gate">
+  <div class="card">
+    <h1>숏폼 드라마 기획 대시보드</h1>
+    <p class="muted">본인 구글 계정으로 로그인하면, 본인 드라이브의 <b>기획-v1</b> 워크스페이스를 읽고 편집합니다.</p>
+    <div id="cfgWarn"></div>
+    <div style="margin:16px 0"><button class="gbtn" id="loginBtn">Google로 로그인</button></div>
+    <details style="text-align:left;margin-top:10px">
+      <summary class="muted" style="cursor:pointer">고급: 루트 폴더를 직접 지정</summary>
+      <label>루트 폴더 ID (비우면 이름 '기획-v1' 자동 탐색)
+        <input id="rootIdInput" placeholder="예: 1BjcEr0ANTEvvU5AYZL1BdicJ_4wB7OeA"></label>
+    </details>
+    <div id="gateMsg"></div>
+  </div>
+</div>
+
+<!-- ============ 앱 본문 ============ -->
+<div class="wrap hidden" id="app">
+  <h1>숏폼 드라마 기획 대시보드</h1>
+  <div class="sub">Google Drive · <b id="rootName">기획-v1</b> 워크스페이스 · <span id="who"></span>
+    <button class="mini" onclick="loadAll()">Reload</button>
+    <button class="mini" onclick="signOut()">로그아웃</button>
+    <span id="status"></span></div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h2>📊 현재 규칙 <span class="muted" id="ruleMeta"></span></h2>
+        <div id="baseline" class="muted"></div>
+        <div style="margin-top:8px" class="k">트리거 순위 (ER 중앙값 · 기준선↑=강)</div>
+        <table id="trigTable"><tbody></tbody></table>
+        <div style="margin-top:10px" class="k">트로프 순위 (저장·공유 견인)</div>
+        <table id="tropeTable"><tbody></tbody></table>
+        <div style="margin-top:10px" class="k">컷 지표 (상위 1/3)</div>
+        <div id="cutMetrics" class="muted"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="tabs">
+          <button data-tab="tree" class="active">🗂 워크스페이스</button>
+          <button data-tab="addWorld">＋ 세계관</button>
+          <button data-tab="addChar">＋ 캐릭터</button>
+          <button data-tab="addEp">＋ 에피소드</button>
+          <button data-tab="addSb">＋ 스토리보드</button>
+        </div>
+        <div id="tab-tree"><div id="tree"><span class="spin"></span> 불러오는 중…</div></div>
+
+        <div id="tab-addWorld" class="hidden">
+          <label>세계관 이름 <input id="w_name" placeholder="예: 고등학교"></label>
+          <label>ID (영문·고유) <input id="w_id" placeholder="world_highschool"></label>
+          <label>톤 한 줄 <input id="w_tone"></label>
+          <label>배경·설정 <textarea id="w_setting"></textarea></label>
+          <label>이식 규칙 (한 줄에 하나) <textarea id="w_rules"></textarea></label>
+          <div style="margin-top:12px"><button class="primary" onclick="addWorld()">세계관 추가</button></div>
+          <div id="w_msg"></div>
+        </div>
+
+        <div id="tab-addChar" class="hidden">
+          <label>세계관 <select id="c_world"></select></label>
+          <div class="row2"><label>이름 <input id="c_name"></label><label>ID (영문·고유) <input id="c_id" placeholder="char_dowoon"></label></div>
+          <label>학년·반 <input id="c_grade"></label>
+          <label>아키타입 <select id="c_arch">
+            <option>얼음 회장님</option><option>다정한 소꿉친구</option><option>나쁜남자·일진</option>
+            <option>열혈 직진남</option><option>미스터리 전학생</option><option>기타</option></select></label>
+          <label>1차 트리거 (세계관 내 고유·필수) <select id="c_trig"></select></label>
+          <div id="c_trigWarn"></div>
+          <label>2차 트리거 <select id="c_trig2"></select></label>
+          <div class="row2"><label>겉 (강함) <input id="c_gs"></label><label>그 앞에서만 (약함) <input id="c_gh"></label></div>
+          <label>시그니처 행동 <input id="c_sig"></label>
+          <label>첫 3초 훅 (얼굴만 X, 관계 단서 함께) <textarea id="c_hook"></textarea></label>
+          <div class="row2"><label>텐션 상대 <input id="c_tp"></label><label>금기·장벽 <input id="c_taboo"></label></div>
+          <div style="margin-top:12px"><button class="primary" id="c_submit" onclick="addChar()">캐릭터 추가</button></div>
+          <div id="c_msg"></div>
+        </div>
+
+        <div id="tab-addEp" class="hidden">
+          <label>주인공 캐릭터 <select id="e_char"></select></label>
+          <label>메인스토리 <select id="e_story"></select></label>
+          <div class="row2"><label>제목 <input id="e_title"></label><label>ID (영문·고유) <input id="e_id" placeholder="ep_dowoon_01"></label></div>
+          <label>이 화가 회수할 트리거 <select id="e_trig"></select></label>
+          <label>한 줄 줄거리 <input id="e_log"></label>
+          <label>HOOK (0-3s) <textarea id="e_hook"></textarea></label>
+          <label>SETUP (3-12s) <textarea id="e_setup"></textarea></label>
+          <label>BUILD (12-30s) <textarea id="e_build"></textarea></label>
+          <label>PAYOFF (30-45s) <textarea id="e_payoff"></textarea></label>
+          <label>HOOK-OUT (마지막 3s) <textarea id="e_hookout"></textarea></label>
+          <div style="margin-top:12px"><button class="primary" onclick="addEp()">에피소드 추가</button></div>
+          <div id="e_msg"></div>
+        </div>
+
+        <div id="tab-addSb" class="hidden">
+          <label>연결 에피소드 <select id="s_ep"></select></label>
+          <label>ID (영문·고유) <input id="s_id" placeholder="sb_dowoon_01"></label>
+          <div class="note info">10컷 · 3초 고정. framing/gaze/angle은 정해진 값만. 남자 대사는 [생성]칸에 ③ (입모양+보이스) "대사".</div>
+          <div id="sbCuts"></div>
+          <div style="margin-top:12px"><button class="primary" onclick="addSb()">스토리보드 추가</button></div>
+          <div id="s_msg"></div>
+        </div>
+      </div>
+      <div class="card" id="detailCard" style="display:none">
+        <h2>상세 <button class="mini" style="margin-left:auto" onclick="document.getElementById('detailCard').style.display='none'">닫기</button></h2>
+        <div id="detail" class="detail"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   ▼▼▼ 설정 (배포 전 반드시 수정) ▼▼▼
+   Google Cloud Console에서 만든 OAuth 클라이언트 ID를 넣으세요.
+   자세한 절차는 같은 폴더의 README.md 참고.
+   ============================================================ */
+const CONFIG = {
+  CLIENT_ID: "YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+  SCOPE: "https://www.googleapis.com/auth/drive",   // 기존 폴더 읽기+쓰기. (앱 생성 파일만 다루려면 drive.file)
+  ROOT_FOLDER_NAME: "기획-v1"
+};
+
+const FRAMING=["미디엄","클로즈업","전신","인서트"];
+const GAZE=["나를 본다","나를 안 본다","나를 보다가 안 본다","얼굴X"];
+const ANGLE=["아이레벨","로우앵글","하이앵글"];
+const TIMES=["0-3s","3-6s","6-9s","9-12s","12-15s","15-18s","18-21s","21-24s","24-27s","27-30s"];
+
+let TOKEN=null, tokenClient=null, ROOT_ID=null;
+let FOLDERS={}, RULES=null, WORLDS=[], CHARS=[], STORIES=[], EPS=[], SBS=[];
+
+/* ---------- OAuth ---------- */
+window.addEventListener('load',()=>{
+  if(CONFIG.CLIENT_ID.startsWith("YOUR_")){
+    document.getElementById('cfgWarn').innerHTML='<div class="note err">⚠ CLIENT_ID가 설정되지 않았습니다. index.html의 CONFIG를 수정하세요 (README 참고).</div>';
+  }
+  const iv=setInterval(()=>{
+    if(window.google && google.accounts && google.accounts.oauth2){
+      clearInterval(iv);
+      tokenClient=google.accounts.oauth2.initTokenClient({
+        client_id:CONFIG.CLIENT_ID, scope:CONFIG.SCOPE,
+        callback:(resp)=>{
+          if(resp.error){document.getElementById('gateMsg').innerHTML='<div class="note err">로그인 실패: '+resp.error+'</div>';return;}
+          TOKEN=resp.access_token; onSignedIn();
+        }
+      });
+    }
+  },200);
+});
+document.getElementById('loginBtn').onclick=()=>{
+  if(!tokenClient){document.getElementById('gateMsg').innerHTML='<div class="note err">Google 스크립트 로딩 중… 잠시 후 다시 시도하세요.</div>';return;}
+  tokenClient.requestAccessToken({prompt:'consent'});
+};
+function signOut(){
+  if(TOKEN) google.accounts.oauth2.revoke(TOKEN,()=>{});
+  TOKEN=null;
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('gate').style.display='block';
+}
+async function onSignedIn(){
+  document.getElementById('gate').style.display='none';
+  document.getElementById('app').classList.remove('hidden');
+  try{ await whoAmI(); await discover(); await loadAll(); }
+  catch(e){ document.getElementById('status').innerHTML='<span style="color:#c0392b">'+e.message+'</span>'; }
+}
+async function whoAmI(){
+  try{const r=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+TOKEN}});
+    const u=await r.json(); document.getElementById('who').textContent=u.email||'';}catch(e){}
+}
+
+/* ---------- Drive REST ---------- */
+async function driveFetch(url,opts={}){
+  opts.headers=Object.assign({Authorization:'Bearer '+TOKEN},opts.headers||{});
+  const r=await fetch(url,opts);
+  if(r.status===401){ // 토큰 만료 → 재요청
+    return new Promise((res,rej)=>{
+      tokenClient.callback=(resp)=>{ if(resp.error){rej(new Error('재인증 실패'));return;} TOKEN=resp.access_token;
+        opts.headers.Authorization='Bearer '+TOKEN; fetch(url,opts).then(res).catch(rej); };
+      tokenClient.requestAccessToken({prompt:''});
+    });
+  }
+  return r;
+}
+async function driveList(q){
+  const url='https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(q)+
+    '&fields=files(id,name,mimeType,parents)&pageSize=200&spaces=drive';
+  const r=await driveFetch(url); if(!r.ok) throw new Error('목록 조회 실패 '+r.status);
+  return (await r.json()).files||[];
+}
+async function driveGetJson(id){
+  const r=await driveFetch('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media');
+  if(!r.ok) throw new Error('파일 읽기 실패 '+r.status);
+  const txt=await r.text(); return JSON.parse(txt);
+}
+async function driveCreateJson(folderId,name,obj){
+  const boundary='sf_'+Math.random().toString(36).slice(2);
+  const meta={name,parents:[folderId],mimeType:'application/json'};
+  const body='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+
+    JSON.stringify(meta)+'\r\n--'+boundary+
+    '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+
+    JSON.stringify(obj,null,2)+'\r\n--'+boundary+'--';
+  const r=await driveFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name',
+    {method:'POST',headers:{'Content-Type':'multipart/related; boundary='+boundary},body});
+  if(!r.ok) throw new Error('저장 실패 '+r.status+' '+(await r.text()).slice(0,120));
+  return await r.json();
+}
+async function findFolderByName(name){
+  const f=await driveList(`name='${name.replace(/'/g,"\\'")}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+  return f[0]?f[0].id:null;
+}
+async function listJsonIn(folderId){
+  if(!folderId) return [];
+  const f=await driveList(`'${folderId}' in parents and mimeType='application/json' and trashed=false`);
+  return f.filter(x=>x.name!=='_템플릿.json');
+}
+async function loadFolderRecords(folderId){
+  const files=await listJsonIn(folderId);
+  return await Promise.all(files.map(async f=>{const o=await driveGetJson(f.id);o.__fileId=f.id;o.__name=f.name;return o;}));
+}
+
+/* ---------- Discovery ---------- */
+async function discover(){
+  document.getElementById('status').innerHTML='<span class="spin"></span> 폴더 탐색 중';
+  const manual=document.getElementById('rootIdInput').value.trim();
+  ROOT_ID = manual || await findFolderByName(CONFIG.ROOT_FOLDER_NAME);
+  if(!ROOT_ID) throw new Error(`'${CONFIG.ROOT_FOLDER_NAME}' 폴더를 찾지 못했습니다. 고급 설정에서 폴더 ID를 지정하세요.`);
+  const folders=await driveList(`'${ROOT_ID}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+  const byName={}; folders.forEach(f=>byName[f.name]=f.id);
+  FOLDERS={rules:byName['00_규칙엔진'],world:byName['01_세계관'],char:byName['02_캐릭터'],
+    story:byName['03_메인스토리'],ep:byName['04_에피소드'],sb:byName['05_스토리보드']};
+  document.getElementById('rootName').textContent=CONFIG.ROOT_FOLDER_NAME;
+}
+
+/* ---------- Load ---------- */
+async function loadAll(){
+  document.getElementById('status').innerHTML='<span class="spin"></span> 동기화 중';
+  try{
+    let RF=null;
+    if(FOLDERS.rules){const rf=(await listJsonIn(FOLDERS.rules)).find(f=>f.name==='규칙_최신.json'); if(rf) RF=await driveGetJson(rf.id);}
+    RULES=RF;
+    [WORLDS,CHARS,STORIES,EPS,SBS]=await Promise.all([
+      loadFolderRecords(FOLDERS.world),loadFolderRecords(FOLDERS.char),loadFolderRecords(FOLDERS.story),
+      loadFolderRecords(FOLDERS.ep),loadFolderRecords(FOLDERS.sb)]);
+    renderRules();renderTree();fillSelectors();
+    document.getElementById('status').textContent='';
+  }catch(e){document.getElementById('status').innerHTML='<span style="color:#c0392b">오류: '+e.message+'</span>';
+    document.getElementById('tree').innerHTML='<div class="note err">'+e.message+'</div>';}
+}
+
+/* ---------- Rules ---------- */
+function baseER(){return RULES?RULES.baseline.median_er:0.42;}
+function trigInfo(t){return (RULES?.trigger_ranking_grammar||[]).find(x=>x.tag===t);}
+function tropeInfo(t){return (RULES?.trope_ranking||[]).find(x=>x.tag===t);}
+function renderRules(){
+  if(!RULES){document.getElementById('ruleMeta').textContent='(규칙 없음)';return;}
+  document.getElementById('ruleMeta').textContent=`· ${RULES.n_videos_total}편`;
+  document.getElementById('baseline').innerHTML=`기준선 ER <b>${RULES.baseline.median_er}%</b> · 저장률 ${RULES.baseline.median_save_rate}%`;
+  const tt=document.querySelector('#trigTable tbody');tt.innerHTML='';
+  RULES.trigger_ranking_grammar.slice(0,8).forEach(t=>{const s=t.median_er>=baseER();
+    tt.innerHTML+=`<tr><td>${t.label}</td><td>${t.median_er}</td><td><span class="badge ${s?'b-strong':'b-weak'}">${s?'강':'약'}</span></td></tr>`;});
+  const pp=document.querySelector('#tropeTable tbody');pp.innerHTML='';
+  RULES.trope_ranking.slice(0,6).forEach(t=>{const s=t.median_er>=baseER();
+    pp.innerHTML+=`<tr><td>${t.tag}${t.low_sample?' <span class="pill">저표본</span>':''}</td><td>${t.median_er}</td><td><span class="badge ${s?'b-strong':'b-weak'}">${s?'강':'약'}</span></td></tr>`;});
+  const cm=RULES.cut_metrics?.top_third;
+  if(cm)document.getElementById('cutMetrics').innerHTML=`컷 ${cm.median_cut_count}개 · 길이 ${cm.median_video_len}s · 첫3초 클로즈업 ${cm.median_first3s_closeup}`;
+}
+
+/* ---------- Client judge (A /60) ---------- */
+function judgeEpisode(ep){
+  const ch=CHARS.find(c=>c.id===ep.character_id),st=STORIES.find(s=>s.id===ep.story_id),sb=SBS.find(b=>b.id===ep.storyboard_id);
+  let score=0;const fails=[];
+  if(ch){const dup=CHARS.some(o=>o.id!==ch.id&&o.world_id===ch.world_id&&o.primary_trigger===ch.primary_trigger);
+    if(!dup)score+=12;else fails.push('A1 트리거중복');}else fails.push('A1 캐릭터없음');
+  const ti=trigInfo(ep.target_trigger); if(ti&&ti.median_er>=baseER())score+=10;else fails.push('A2 트리거약함');
+  if(st){const pi=tropeInfo(st.central_trope);if(pi&&pi.median_er>=baseER())score+=8;else fails.push('A3 트로프약함');}else fails.push('A3 스토리없음');
+  if(sb&&sb.cuts){const cuts=sb.cuts;
+    if(cuts.length===10&&cuts.every((c,i)=>c.time===TIMES[i]))score+=10;else fails.push('A4 컷그리드');
+    if(cuts.every(c=>{const g=c.gen_beats||'',e=c.edit_subtitle||'';
+      const b=(c.framing==='인서트')||((g.match(/[①②③④⑤]/g)||[]).length>=2);
+      return b&&!/\d+s\b/.test(e)&&!/SFX|효과음|배경음|BGM/.test(e);}))score+=12;else fails.push('A5 출력계약');
+    if(cuts.every(c=>FRAMING.includes(c.framing)&&GAZE.includes(c.gaze)&&ANGLE.includes(c.angle)))score+=8;else fails.push('A6 옵션값');
+  }else fails.push('A4~A6 스토리보드없음');
+  return {score,fails};
+}
+
+/* ---------- Tree ---------- */
+function renderTree(){
+  const el=document.getElementById('tree');
+  if(!WORLDS.length){el.innerHTML='<div class="muted">세계관이 없습니다. 상단 ＋세계관으로 시작하세요.</div>';return;}
+  el.innerHTML='';
+  WORLDS.forEach(w=>{
+    const chars=CHARS.filter(c=>c.world_id===w.id);
+    let html=`<div class="world"><div class="whead"><span>🌍 ${w.name} <span class="k">${w.id}</span></span><span class="pill">캐릭터 ${chars.length}</span></div>`;
+    chars.forEach(c=>{
+      const ti=trigInfo(c.primary_trigger),strong=ti&&ti.median_er>=baseER(),eps=EPS.filter(e=>e.character_id===c.id);
+      html+=`<div class="char"><div class="chead"><span class="name">🎭 ${c.name} <span class="k">${c.archetype}</span></span>
+        <span class="badge ${strong?'b-strong':'b-weak'}">${ti?ti.label:c.primary_trigger}</span></div>`;
+      eps.forEach(e=>{const j=judgeEpisode(e),cls=j.score>=50?'b-strong':(j.score>=34?'b-blue':'b-weak');
+        html+=`<div class="ep">▶ ${e.title} <span class="k">${e.id}</span>
+          <span class="score"><span class="badge ${cls}">자동 ${j.score}/60</span></span>
+          <button class="mini" style="float:right;margin-right:6px" onclick='showDetail("${e.id}")'>상세</button></div>`;});
+      if(!eps.length)html+=`<div class="ep muted">에피소드 없음</div>`;
+      html+=`</div>`;});
+    if(!chars.length)html+=`<div class="muted" style="margin-left:6px">캐릭터 없음</div>`;
+    html+=`</div>`;el.innerHTML+=html;});
+}
+function showDetail(id){
+  const o=EPS.find(e=>e.id===id),j=judgeEpisode(o);
+  const ch=CHARS.find(c=>c.id===o.character_id),st=STORIES.find(s=>s.id===o.story_id),sb=SBS.find(b=>b.id===o.storyboard_id);
+  let x=`<div><span class="k">캐릭터</span> ${ch?ch.name:o.character_id} · <span class="k">스토리</span> ${st?st.title:o.story_id}</div>
+    <div><span class="k">타깃 트리거</span> ${o.target_trigger}</div>
+    <div style="margin-top:6px"><b>자동 심사 ${j.score}/60</b> ${j.fails.length?'<span class="badge b-weak">'+j.fails.join(', ')+'</span>':'<span class="badge b-strong">A항목 통과</span>'}</div>`;
+  const cm=RULES?.cut_metrics?.top_third;
+  if(sb&&cm&&sb.cuts.length<cm.median_cut_count-3)x+=`<div class="adv">⚠ 컷 ${sb.cuts.length}개 — 상위권 중앙값 ${cm.median_cut_count}개보다 적음</div>`;
+  x+=`<div style="margin-top:8px" class="k">비트</div>`+Object.entries(o.beats||{}).map(([k,v])=>`<div><b>${k}</b> ${v}</div>`).join('');
+  document.getElementById('detail').innerHTML=`<div><b>${o.title}</b></div>`+x;
+  document.getElementById('detailCard').style.display='block';
+}
+
+/* ---------- Selectors ---------- */
+function opt(v,t){return `<option value="${v}">${t||v}</option>`;}
+function fillSelectors(){
+  const trigOpts=(RULES?.trigger_ranking_grammar||[]).map(t=>opt(t.tag,`${t.median_er>=baseER()?'✅':'⚠'} ${t.label} (ER ${t.median_er})`)).join('');
+  ['c_trig','c_trig2','e_trig'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=trigOpts;});
+  document.getElementById('c_world').innerHTML=WORLDS.map(w=>opt(w.id,w.name)).join('')||opt('','(세계관 먼저)');
+  document.getElementById('e_char').innerHTML=CHARS.map(c=>opt(c.id,c.name)).join('')||opt('','(캐릭터 먼저)');
+  document.getElementById('e_story').innerHTML=STORIES.map(s=>opt(s.id,s.title)).join('')||opt('','(스토리 없음)');
+  document.getElementById('s_ep').innerHTML=EPS.map(e=>opt(e.id,e.title)).join('')||opt('','(에피소드 먼저)');
+  buildSbForm();checkTrigDup();
+}
+function checkTrigDup(){
+  const w=document.getElementById('c_world').value,t=document.getElementById('c_trig').value;
+  const dup=CHARS.find(c=>c.world_id===w&&c.primary_trigger===t);
+  const warn=document.getElementById('c_trigWarn'),btn=document.getElementById('c_submit');
+  if(dup){warn.innerHTML=`<div class="note err">⛔ 이 세계관의 <b>${dup.name}</b>가 이미 이 1차 트리거를 씁니다.</div>`;btn.disabled=true;}
+  else{warn.innerHTML='';btn.disabled=false;}
+}
+document.getElementById('c_world').addEventListener('change',checkTrigDup);
+document.getElementById('c_trig').addEventListener('change',checkTrigDup);
+function buildSbForm(){
+  const el=document.getElementById('sbCuts');el.innerHTML='';
+  for(let i=0;i<10;i++)el.innerHTML+=`<div style="border:1px solid #eee;border-radius:8px;padding:8px;margin-top:8px">
+    <b>컷 ${i+1}</b> <span class="k">${TIMES[i]}</span>
+    <div class="row2"><label>프레이밍<select id="sb_fr_${i}">${FRAMING.map(v=>opt(v)).join('')}</select></label>
+    <label>시선<select id="sb_gz_${i}">${GAZE.map(v=>opt(v)).join('')}</select></label></div>
+    <label>앵글<select id="sb_an_${i}">${ANGLE.map(v=>opt(v)).join('')}</select></label>
+    <label>[생성] 비트<textarea id="sb_gb_${i}"></textarea></label>
+    <label>[후편집] 나의 자막<input id="sb_ed_${i}" value="자막 없음"></label>
+    <label>연출의도<input id="sb_in_${i}"></label></div>`;
+}
+
+/* ---------- Add ---------- */
+function today(){return new Date().toISOString().slice(0,10);}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+function msg(id,t,c){document.getElementById(id).innerHTML=`<div class="note ${c}">${t}</div>`;}
+async function addWorld(){
+  const id=w_id.value.trim(),name=w_name.value.trim();
+  if(!id||!name)return msg('w_msg','ID와 이름은 필수','err');
+  const obj={id,name,tone:w_tone.value,setting:w_setting.value,localization_rules:w_rules.value.split('\n').map(s=>s.trim()).filter(Boolean),created_at:today(),updated_at:today()};
+  try{msg('w_msg','<span class="spin"></span> 저장 중…','info');await driveCreateJson(FOLDERS.world,id+'.json',obj);toast('세계관 추가됨');await loadAll();switchTab('tree');}
+  catch(e){msg('w_msg','실패: '+e.message,'err');}
+}
+async function addChar(){
+  const id=c_id.value.trim(),name=c_name.value.trim(),world=c_world.value,trig=c_trig.value;
+  if(!id||!name||!world)return msg('c_msg','ID·이름·세계관 필수','err');
+  if(CHARS.find(c=>c.world_id===world&&c.primary_trigger===trig))return msg('c_msg','트리거 중복. 다른 트리거를 고르세요.','err');
+  const obj={id,world_id:world,name,grade_class:c_grade.value,archetype:c_arch.value,primary_trigger:trig,secondary_trigger:c_trig2.value,
+    gap_surface:c_gs.value,gap_hidden:c_gh.value,signature_action:c_sig.value,first3s_hook:c_hook.value,
+    tension_partner:c_tp.value,taboo_barrier:c_taboo.value,episode_ids:[],created_at:today(),updated_at:today()};
+  try{msg('c_msg','<span class="spin"></span> 저장 중…','info');await driveCreateJson(FOLDERS.char,id+'.json',obj);toast('캐릭터 추가됨');await loadAll();switchTab('tree');}
+  catch(e){msg('c_msg','실패: '+e.message,'err');}
+}
+async function addEp(){
+  const id=e_id.value.trim(),title=e_title.value.trim(),ch=e_char.value;
+  if(!id||!title||!ch)return msg('e_msg','ID·제목·캐릭터 필수','err');
+  const obj={id,character_id:ch,story_id:e_story.value,title,target_trigger:e_trig.value,logline:e_log.value,
+    beats:{HOOK:e_hook.value,SETUP:e_setup.value,BUILD:e_build.value,PAYOFF:e_payoff.value,HOOKOUT:e_hookout.value},
+    storyboard_id:"",judge_score:null,status:"draft",published_at:null,
+    metrics:{views:null,likes:null,comments:null,shares:null,saves:null,duration_s:null,er_pct:null,save_rate_pct:null},
+    created_at:today(),updated_at:today()};
+  try{msg('e_msg','<span class="spin"></span> 저장 중…','info');await driveCreateJson(FOLDERS.ep,id+'.json',obj);toast('에피소드 추가됨');await loadAll();switchTab('tree');}
+  catch(e){msg('e_msg','실패: '+e.message,'err');}
+}
+async function addSb(){
+  const id=s_id.value.trim(),ep=s_ep.value;
+  if(!id||!ep)return msg('s_msg','ID·에피소드 필수','err');
+  const cuts=[];for(let i=0;i<10;i++)cuts.push({cut:i+1,time:TIMES[i],framing:document.getElementById('sb_fr_'+i).value,
+    gaze:document.getElementById('sb_gz_'+i).value,angle:document.getElementById('sb_an_'+i).value,
+    gen_beats:document.getElementById('sb_gb_'+i).value,edit_subtitle:document.getElementById('sb_ed_'+i).value,intent:document.getElementById('sb_in_'+i).value});
+  const obj={id,episode_id:ep,format:"POV_남캐1인_30초_10컷_3초고정",cuts,created_at:today(),updated_at:today()};
+  try{msg('s_msg','<span class="spin"></span> 저장 중…','info');await driveCreateJson(FOLDERS.sb,id+'.json',obj);toast('스토리보드 추가됨');await loadAll();switchTab('tree');}
+  catch(e){msg('s_msg','실패: '+e.message,'err');}
+}
+
+/* ---------- Tabs ---------- */
+function switchTab(tab){
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  ['tree','addWorld','addChar','addEp','addSb'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==tab));
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+</script>
+</body>
+</html>
